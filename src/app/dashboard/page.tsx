@@ -9,9 +9,9 @@ export default function Home() {
 
   useEffect(() => {
 
-    const user = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
 
-    if (user) {
+    if (token) {
       router.replace("/dashboard");
     } else {
       router.replace("/signin");
@@ -20,7 +20,7 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex items-center justify-center h-screen text-lg">
       Loading...
     </div>
   );
