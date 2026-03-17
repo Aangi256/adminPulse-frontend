@@ -22,9 +22,9 @@ export default function AdminLayout({
 
   useEffect(() => {
 
-    const user = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
 
-    if (!user) {
+    if (!token) {
       router.replace("/signin");
     } else {
       setCheckingAuth(false);
@@ -43,8 +43,8 @@ export default function AdminLayout({
   const mainContentMargin = isMobileOpen
     ? "ml-0"
     : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+      ? "lg:ml-[290px]"
+      : "lg:ml-[90px]";
 
   return (
     <div className="min-h-screen xl:flex">

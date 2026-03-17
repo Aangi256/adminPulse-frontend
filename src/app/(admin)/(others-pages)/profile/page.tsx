@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function ProfilePage() {
 
@@ -8,47 +9,76 @@ export default function ProfilePage() {
 
   useEffect(() => {
 
-    const storedUser = localStorage.getItem("user");
+    const fetchUser = async () => {
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+
+      let userId = null;
+
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        userId = parsedUser.id;
+      }
+
+      console.log(userId); console.log(token);
+      console.log(userId);
+
+      if (!token || !userId) return;
+
+      try {
+
+        const res = await axios.get(
+          `http://localhost:5000/api/v1/users/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        setUser(res.data.user);
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+    };
+
+    fetchUser();
 
   }, []);
 
+  if (!user) {
+
+    return <p className="p-6">Loading user profile...</p>;
+
+  }
+
   return (
 
-    <div className="p-6">
+    <div className="p-8">
 
-      <h1 className="text-2xl font-semibold mb-6">
-        User Profile
-      </h1>
+      <h2 className="text-2xl font-bold mb-6">
 
-      <div className="bg-white shadow rounded-lg p-6 max-w-lg">
+        Profile
 
-        <div className="mb-4">
-          <label className="text-gray-600">Full Name</label>
-          <p className="text-lg font-medium">
-            {user?.fullName || "N/A"}
-          </p>
-        </div>
+      </h2>
 
-        <div className="mb-4">
-          <label className="text-gray-600">Email</label>
-          <p className="text-lg font-medium">
-            {user?.email || "N/A"}
-          </p>
-        </div>
+      <div className="space-y-4">
 
-        <div className="mb-4">
-          <label className="text-gray-600">Role</label>
-          <p className="text-lg font-medium">
-            {user?.role || "N/A"}
-          </p>
-        </div>
+        <p><b>Name:</b> {user.fullName}</p>
+        <p><b>Email:</b> {user.email}</p>
+        <p><b>Age:</b> {user.age}</p>
+        <p><b>Country:</b> {user.country}</p>
+        <p><b>Status:</b> {user.status}</p>
+        <p><b>Role:</b> {user.role?.name}</p>
 
       </div>
 
     </div>
+
   );
 }

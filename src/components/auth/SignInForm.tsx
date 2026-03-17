@@ -15,50 +15,67 @@ export default function SignInForm() {
 
   const [error, setError] = useState("");
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
 
-  try {
+    e.preventDefault();
 
-    const response = await axios.post(
-      "http://localhost:5000/api/v1/auth/login",
-      formData
-    );
+    setError("");
 
-    if (response.data.success) {
+    try {
 
-      const token = response.data.token;
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/auth/login",
+        formData
+      );
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      console.log("Login Response:", res.data);
 
-      document.cookie = `token=${token}; path=/`;
+      if (res.data.success) {
 
-      router.push("/");
+        const token = res.data.token;
+        const user = res.data.user;
+
+        // store login data
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+
+        // redirect to dashboard
+        router.push("/");
+
+      }
+
+    } catch (err: any) {
+
+      console.error("Login Error:", err);
+
+      if (err.response?.status === 401) {
+
+        setError("Invalid email or password");
+
+      } else {
+
+        setError(err.response?.data?.message || "Login failed");
+
+      }
 
     }
 
-  } catch (error: any) {
+  };
 
-    console.log(error);
-    alert(error.response?.data?.message || "Login failed");
-
-  }
-};
   return (
 
     <form onSubmit={handleSubmit} className="space-y-5">
 
-      {/* Email */}
       <div>
-
         <label>Email</label>
 
         <input
@@ -68,13 +85,12 @@ export default function SignInForm() {
           value={formData.email}
           onChange={handleChange}
           className="w-full border p-3 rounded-lg"
+          required
         />
 
       </div>
 
-      {/* Password */}
       <div>
-
         <label>Password</label>
 
         <input
@@ -84,11 +100,13 @@ export default function SignInForm() {
           value={formData.password}
           onChange={handleChange}
           className="w-full border p-3 rounded-lg"
+          required
         />
 
       </div>
 
       <div className="text-right">
+
         <button
           type="button"
           onClick={() => router.push("/forgot-password")}
@@ -96,6 +114,7 @@ export default function SignInForm() {
         >
           Forgot Password?
         </button>
+
       </div>
 
       {error && (
@@ -112,5 +131,7 @@ export default function SignInForm() {
       </button>
 
     </form>
+
   );
+
 }
