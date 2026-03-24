@@ -41,6 +41,7 @@ export default function SignInForm() {
 
       if (res.data.success) {
 
+
         const token = res.data.token;
         const user = res.data.user;
 
@@ -51,6 +52,16 @@ export default function SignInForm() {
         // redirect to dashboard
         router.push("/");
 
+        // ✅ STORE TOKEN (THIS IS MISSING)
+        localStorage.setItem("token", res.data.token);
+
+        // store user
+        localStorage.setItem(
+          "user",
+          JSON.stringify(res.data.user)
+        );
+
+        router.replace("/");
       }
 
     } catch (err: any) {
