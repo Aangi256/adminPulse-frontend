@@ -107,15 +107,16 @@ export default function SignInForm() {
 
       if (res.data.success) {
 
-        // store logged user
+        // ✅ STORE TOKEN (THIS IS MISSING)
+        localStorage.setItem("token", res.data.token);
+
+        // store user
         localStorage.setItem(
           "user",
           JSON.stringify(res.data.user)
         );
 
-        // redirect to dashboard
         router.replace("/");
-
       }
 
     } catch (err: any) {

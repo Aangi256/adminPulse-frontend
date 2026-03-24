@@ -16,7 +16,8 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
-  RoleIcon,  
+  RoleIcon, 
+  Customers,
 } from "../icons/index";
 
 type NavItem = {
@@ -58,7 +59,19 @@ const navItems: NavItem[] = [
   name: "Users",
   icon: <UserCircleIcon />,
   path: "/user",
-},
+  },
+  
+  {
+    name: "Customer",
+    icon: <Customers className="w-5 h-5 shrink-0"/>,
+    path: "/customers",
+  },
+
+  {
+  name: "Chat",
+  path: "/chat",
+  icon: "💬" 
+}
 
 ];
 

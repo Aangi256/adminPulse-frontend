@@ -4,118 +4,192 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function UserPage() {
+
   const [roles, setRoles] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [editId, setEditId] = useState<string | null>(null);
+  const [passwordEditId, setPasswordEditId] = useState<string | null>(null);
+
+  const [newPassword, setNewPassword] = useState("");
+
+  const [image, setImage] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
     age: "",
     email: "",
     country: "",
-    password: "",
     role: "",
     status: "active"
   });
 
-  const [image, setImage] = useState<File | null>(null);
-  const [editId, setEditId] = useState<string | null>(null);
-
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        await fetchRoles();
-        await fetchUsers();
-      } catch (error) {
-        console.error("Initial load failed:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
 
+  const loadData = async () => {
+    await fetchRoles();
+    await fetchUsers();
+    setLoading(false);
+  };
+
   const fetchRoles = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/v1/roles");
-      setRoles(res.data);
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-    }
+
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get("http://localhost:5000/api/v1/roles", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    setRoles(res.data);
+
   };
 
   const fetchUsers = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/v1/users");
-      setUsers(res.data);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
+
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get("http://localhost:5000/api/v1/users", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    setUsers(res.data.users);
+
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e: any) => {
+
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEdit = (user: any) => {
+
+    setFormData({
+      fullName: user.fullName,
+      age: user.age,
+      email: user.email,
+      country: user.country,
+      role: user.role?._id,
+      status: user.status
+    });
+
+    setEditId(user._id);
+    setPasswordEditId(null);
+
+  };
+
+  const handleSubmit = async (e: any) => {
+
     e.preventDefault();
 
-    try {
-      const data = new FormData();
+    const token = localStorage.getItem("token");
 
-      Object.keys(formData).forEach((key) => {
-        data.append(key, (formData as any)[key]);
-      });
+    const data = new FormData();
 
-      if (image) {
-        data.append("image", image);
-      }
+    Object.keys(formData).forEach((key) => {
+      data.append(key, (formData as any)[key]);
+    });
 
-      if (editId) {
-        await axios.put(
-          `http://localhost:5000/api/v1/users/${editId}`,
-          data
-        );
-      } else {
-        await axios.post(
-          "http://localhost:5000/api/v1/users",
-          data
-        );
-      }
-
-      setFormData({
-        fullName: "",
-        age: "",
-        email: "",
-        country: "",
-        password: "",
-        role: "",
-        status: "active"
-      });
-
-      setImage(null);
-      setEditId(null);
-      fetchUsers();
-
-    } catch (error) {
-      console.error("Submit error:", error);
+    if (image) {
+      data.append("image", image);
     }
+
+    if (editId) {
+
+      await axios.put(
+        `http://localhost:5000/api/v1/users/${editId}`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+    } else {
+
+      await axios.post(
+        "http://localhost:5000/api/v1/users",
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+    }
+
+    resetForm();
+    fetchUsers();
+
   };
 
-  if (loading) {
-    return <div className="p-6">Loading...</div>;
-  }
+  const updatePassword = async (id: string) => {
+
+    const token = localStorage.getItem("token");
+
+    await axios.put(
+      `http://localhost:5000/api/v1/users/update-password/${id}`,
+      { password: newPassword },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    setPasswordEditId(null);
+    setNewPassword("");
+    fetchUsers();
+
+  };
+
+  const handleDelete = async (id: string) => {
+
+    const token = localStorage.getItem("token");
+
+    await axios.delete(
+      `http://localhost:5000/api/v1/users/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    fetchUsers();
+
+  };
+
+  const resetForm = () => {
+
+    setFormData({
+      fullName: "",
+      age: "",
+      email: "",
+      country: "",
+      role: "",
+      status: "active"
+    });
+
+    setEditId(null);
+    setImage(null);
+
+  };
+
+  if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">User Details</h1>
+
+      <h1 className="text-2xl font-semibold">User Management</h1>
+
+      {/* USER FORM */}
 
       <form
         onSubmit={handleSubmit}
-        autoComplete="off"
         className="bg-white p-6 rounded-xl shadow grid grid-cols-2 gap-4"
       >
+
         <input
           name="fullName"
           placeholder="Full Name"
@@ -141,7 +215,6 @@ export default function UserPage() {
           placeholder="Email"
           value={formData.email}
           onChange={handleChange}
-          autoComplete="new-email"
           className="border p-2 rounded"
           required
         />
@@ -151,18 +224,6 @@ export default function UserPage() {
           placeholder="Country"
           value={formData.country}
           onChange={handleChange}
-          autoComplete="off"
-          className="border p-2 rounded"
-          required
-        />
-
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          autoComplete="new-password"
           className="border p-2 rounded"
           required
         />
@@ -201,38 +262,91 @@ export default function UserPage() {
         <button className="col-span-2 bg-blue-600 text-white p-2 rounded">
           {editId ? "Update User" : "Add User"}
         </button>
+
       </form>
 
+
       <div className="bg-white p-6 rounded-xl shadow">
+
         <table className="w-full border">
+
           <thead>
             <tr className="bg-gray-100">
               <th className="p-2 border">Name</th>
               <th className="p-2 border">Email</th>
               <th className="p-2 border">Role</th>
               <th className="p-2 border">Status</th>
+              <th className="p-2 border">Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {users.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="text-center p-4">
-                  No users found
+
+            {users.map((user: any) => (
+
+              <tr key={user._id}>
+
+                <td className="p-2 border">{user.fullName}</td>
+                <td className="p-2 border">{user.email}</td>
+                <td className="p-2 border">{user.role?.name}</td>
+                <td className="p-2 border">{user.status}</td>
+
+                <td className="p-2 border space-x-2">
+
+                  <button
+                    onClick={() => handleEdit(user)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => setPasswordEditId(user._id)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded"
+                  >
+                    Edit Password
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(user._id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+
+                  {passwordEditId === user._id && (
+                    <div className="mt-2 flex gap-2">
+
+                      <input
+                        type="password"
+                        placeholder="New Password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="border p-1 rounded"
+                      />
+
+                      <button
+                        onClick={() => updatePassword(user._id)}
+                        className="bg-green-600 text-white px-2 rounded"
+                      >
+                        Save
+                      </button>
+
+                    </div>
+                  )}
+
                 </td>
+
               </tr>
-            ) : (
-              users.map((user: any) => (
-                <tr key={user._id}>
-                  <td className="p-2 border">{user.fullName}</td>
-                  <td className="p-2 border">{user.email}</td>
-                  <td className="p-2 border">{user.role?.name}</td>
-                  <td className="p-2 border">{user.status}</td>
-                </tr>
-              ))
-            )}
+
+            ))}
+
           </tbody>
+
         </table>
+
       </div>
+
     </div>
   );
 }
