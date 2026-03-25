@@ -5,7 +5,6 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
-
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -16,22 +15,17 @@ export default function SignInForm() {
   const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault();
-
     setError("");
 
     try {
-
       const res = await axios.post(
         "http://localhost:5000/api/v1/auth/login",
         formData
@@ -40,52 +34,37 @@ export default function SignInForm() {
       console.log("Login Response:", res.data);
 
       if (res.data.success) {
-
-
         const token = res.data.token;
         const user = res.data.user;
 
-        // store login data
+        // ✅ NORMALIZE USER DATA (MOST IMPORTANT FIX)
+        const normalizedUser = {
+          id: user._id, // 🔥 FIX HERE
+          fullName: user.fullName,
+          email: user.email,
+          image: user.image,
+        };
+
+        // ✅ STORE CLEAN DATA
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(normalizedUser));
 
-        // redirect to dashboard
-        router.push("/");
-
-        // ✅ STORE TOKEN (THIS IS MISSING)
-        localStorage.setItem("token", res.data.token);
-
-        // store user
-        localStorage.setItem(
-          "user",
-          JSON.stringify(res.data.user)
-        );
-
+        // ✅ REDIRECT
         router.replace("/");
       }
-
     } catch (err: any) {
-
       console.error("Login Error:", err);
 
       if (err.response?.status === 401) {
-
         setError("Invalid email or password");
-
       } else {
-
         setError(err.response?.data?.message || "Login failed");
-
       }
-
     }
-
   };
 
   return (
-
     <form onSubmit={handleSubmit} className="space-y-5">
-
       <div>
         <label>Email</label>
 
@@ -98,7 +77,6 @@ export default function SignInForm() {
           className="w-full border p-3 rounded-lg"
           required
         />
-
       </div>
 
       <div>
@@ -113,11 +91,9 @@ export default function SignInForm() {
           className="w-full border p-3 rounded-lg"
           required
         />
-
       </div>
 
       <div className="text-right">
-
         <button
           type="button"
           onClick={() => router.push("/forgot-password")}
@@ -125,14 +101,9 @@ export default function SignInForm() {
         >
           Forgot Password?
         </button>
-
       </div>
 
-      {error && (
-        <p className="text-red-500 text-sm">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <button
         type="submit"
@@ -140,9 +111,6 @@ export default function SignInForm() {
       >
         Sign In
       </button>
-
     </form>
-
   );
-
 }

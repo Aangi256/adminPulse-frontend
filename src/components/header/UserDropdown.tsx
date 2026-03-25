@@ -14,40 +14,47 @@ export default function UserDropdown() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const userData = localStorage.getItem("user");
 
-  const fetchUser = async () => {
+        if (!userData || !token) return;
 
-    try {
+        const parsedUser = JSON.parse(userData);
 
-      const token = localStorage.getItem("token");
-      const userData = localStorage.getItem("user");
+        // ✅ HANDLE _id + id both
+        const userId =
+          parsedUser?.id ||
+          parsedUser?._id ||
+          parsedUser?.user?.id ||
+          parsedUser?.user?._id;
 
-      if (!userData || !token) return;
+        console.log("User ID:", userId);
 
-      const user = JSON.parse(userData);
-
-      const res = await axios.get(
-        `http://localhost:5000/api/v1/users/${user.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        if (!userId) {
+          console.error("User ID is undefined ❌");
+          return;
         }
-      );
 
-      setUser(res.data.user);
+        const res = await axios.get(
+          `http://localhost:5000/api/v1/users/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-    } catch (error) {
+        setUser(res.data.user);
+      } catch (error) {
+        console.error("User fetch error", error);
+      }
+    };
 
-      console.error("User fetch error", error);
+    fetchUser();
+  }, []);
 
-    }
-
-  };
-
-  fetchUser();
-
-}, []);
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
