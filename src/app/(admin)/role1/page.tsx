@@ -24,16 +24,25 @@ export default function RolePage() {
   }, []);
 
   const fetchRoles = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/v1/roles"
-      );
+  try {
+    const token = localStorage.getItem("token");
 
-      setRoles(res.data);
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-    }
-  };
+    console.log("TOKEN:", token); // DEBUG
+
+    const res = await axios.get(
+      "http://localhost:5000/api/v1/roles",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ FIX
+        },
+      }
+    );
+
+    setRoles(res.data);
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+  }
+};
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

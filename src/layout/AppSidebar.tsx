@@ -16,8 +16,9 @@ import {
   PlugInIcon,
   TableIcon,
   UserCircleIcon,
-  RoleIcon, 
+  RoleIcon,
   Customers,
+  JobIcon
 } from "../icons/index";
 
 type NavItem = {
@@ -29,10 +30,10 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-  icon: <GridIcon />,
-  name: "Dashboard",
-  path: "/",
-},
+    icon: <GridIcon />,
+    name: "Dashboard",
+    path: "/",
+  },
   {
     icon: <UserCircleIcon />,
     name: "User Profile",
@@ -51,33 +52,39 @@ const navItems: NavItem[] = [
 
   {
     name: "Role",
-    icon: <RoleIcon className="w-5 h-5 shrink-0"/>,
+    icon: <RoleIcon className="w-5 h-5 shrink-0" />,
     path: "/role1",
   },
 
   {
-  name: "Users",
-  icon: <UserCircleIcon />,
-  path: "/user",
+    name: "Users",
+    icon: <UserCircleIcon />,
+    path: "/user",
   },
-  
+
   {
     name: "Customer",
-    icon: <Customers className="w-5 h-5 shrink-0"/>,
+    icon: <Customers className="w-5 h-5 shrink-0" />,
     path: "/customers",
   },
 
   {
-  name: "Chat",
-  path: "/chat",
-  icon: "💬" 
-}
+    name: "Chat",
+    path: "/chat",
+    icon: "💬"
+  },
+
+  {
+    name: "Job",
+    path: "/jobs",
+    icon: <JobIcon className="w-5 h-5 shrink-0"/>
+  }
 
 ];
 
 const othersItems: NavItem[] = [
-  
-  
+
+
   /*{
     icon: <PlugInIcon />,
     name: "Authentication",
@@ -88,7 +95,7 @@ const othersItems: NavItem[] = [
   },*/
 ];
 
-const   AppSidebar: React.FC = () => {
+const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
 
@@ -163,24 +170,21 @@ const   AppSidebar: React.FC = () => {
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${
-                openSubmenu?.type === menuType &&
-                openSubmenu?.index === index
+              className={`menu-item group ${openSubmenu?.type === menuType &&
+                  openSubmenu?.index === index
                   ? "menu-item-active"
                   : "menu-item-inactive"
-              } ${
-                !isExpanded && !isHovered
+                } ${!isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
-              }`}
+                }`}
             >
               <span
-                className={`w-5 h-5 ${
-                  openSubmenu?.type === menuType &&
-                  openSubmenu?.index === index
+                className={`w-5 h-5 ${openSubmenu?.type === menuType &&
+                    openSubmenu?.index === index
                     ? "menu-item-icon-active"
                     : "menu-item-icon-inactive"
-                }`}
+                  }`}
               >
                 {nav.icon}
               </span>
@@ -193,18 +197,16 @@ const   AppSidebar: React.FC = () => {
             nav.path && (
               <Link
                 href={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path)
+                className={`menu-item group ${isActive(nav.path)
                     ? "menu-item-active"
                     : "menu-item-inactive"
-                }`}
+                  }`}
               >
                 <span
-                  className={`${
-                    isActive(nav.path)
+                  className={`${isActive(nav.path)
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
-                  }`}
+                    }`}
                 >
                   {nav.icon}
                 </span>
@@ -225,7 +227,7 @@ const   AppSidebar: React.FC = () => {
               style={{
                 height:
                   openSubmenu?.type === menuType &&
-                  openSubmenu?.index === index
+                    openSubmenu?.index === index
                     ? `${subMenuHeight[`${menuType}-${index}`]}px`
                     : "0px",
               }}
@@ -235,11 +237,10 @@ const   AppSidebar: React.FC = () => {
                   <li key={subItem.name}>
                     <Link
                       href={subItem.path}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path)
+                      className={`menu-dropdown-item ${isActive(subItem.path)
                           ? "menu-dropdown-item-active"
                           : "menu-dropdown-item-inactive"
-                      }`}
+                        }`}
                     >
                       {subItem.name}
                     </Link>
@@ -256,11 +257,10 @@ const   AppSidebar: React.FC = () => {
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-      ${
-        isExpanded || isMobileOpen || isHovered
+      ${isExpanded || isMobileOpen || isHovered
           ? "w-[290px]"
           : "w-[90px]"
-      }
+        }
       ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
       lg:translate-x-0`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}

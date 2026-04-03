@@ -38,7 +38,7 @@ export default function UserPage() {
   const fetchRoles = async () => {
 
     const token = localStorage.getItem("token");
-
+    console.log("TOKEN:", token);
     const res = await axios.get("http://localhost:5000/api/v1/roles", {
       headers: { Authorization: `Bearer ${token}` }
     });

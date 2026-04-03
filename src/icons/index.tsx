@@ -1,6 +1,7 @@
 import PlusIcon from "./plus.svg";
 import RoleIcon from "./role.svg";
-import Customers from "./Customers.svg"
+import Customers from "./Customers.svg";
+import JobIcon from "./JobIcon.svg"
 import CloseIcon from "./close.svg";
 import BoxIcon from "./box.svg";
 import CheckCircleIcon from "./check-circle.svg";
@@ -108,5 +109,6 @@ export {
   ChevronUpIcon,
   ChatIcon,
   RoleIcon,
-  Customers
+  Customers,
+  JobIcon
 };
