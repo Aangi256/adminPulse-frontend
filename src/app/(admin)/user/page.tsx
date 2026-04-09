@@ -86,19 +86,21 @@ export default function UserPage() {
 
   const handleSubmit = async (e: any) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    const data = new FormData();
+  const data = new FormData();
 
-    Object.keys(formData).forEach((key) => {
-      data.append(key, (formData as any)[key]);
-    });
+  Object.keys(formData).forEach((key) => {
+    data.append(key, (formData as any)[key]);
+  });
 
-    if (image) {
-      data.append("image", image);
-    }
+  if (image) {
+    data.append("image", image);
+  }
+
+  try {
 
     if (editId) {
 
@@ -125,7 +127,11 @@ export default function UserPage() {
     resetForm();
     fetchUsers();
 
-  };
+  } catch (error: any) {
+    console.error("ERROR:", error.response?.data || error.message);
+    alert(error.response?.data?.message || "Something went wrong");
+  }
+};
 
   const updatePassword = async (id: string) => {
 
