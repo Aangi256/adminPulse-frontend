@@ -22,47 +22,53 @@ export default function SignInForm() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
+    
+  try {
+    const res = await axios.post(
+      "http://localhost:5000/api/v1/auth/login",
+      formData
+    );
+    console.log("FULL LOGIN RESPONSE:", res.data);
 
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/v1/auth/login",
-        formData
-      );
+    if (res.data.success) {
+      const token = res.data.token;
+      const user = res.data.user;
+      console.log("USER OBJECT:", user);
+      console.log("ROLE OBJECT:", user.role);
+      console.log("ROLE NAME:", user.role?.name);
 
-      console.log("Login Response:", res.data);
+      const normalizedUser = {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        image: user.image,
+        role: user.role?.name || "User",
+      };
 
-      if (res.data.success) {
-        const token = res.data.token;
-        const user = res.data.user;
+      console.log("NORMALIZED USER:", normalizedUser);
 
-        // ✅ NORMALIZE USER DATA (MOST IMPORTANT FIX)
-        const normalizedUser = {
-          id: user._id, // 🔥 FIX HERE
-          fullName: user.fullName,
-          email: user.email,
-          image: user.image,
-        };
 
-        // ✅ STORE CLEAN DATA
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(normalizedUser));
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(normalizedUser));
+      localStorage.setItem("role", user.role?.name || "User");
 
-        // ✅ REDIRECT
-        router.replace("/");
-      }
-    } catch (err: any) {
-      console.error("Login Error:", err);
+      console.log("STORED ROLE:", localStorage.getItem("role"));
+      console.log("STORED USER:", localStorage.getItem("user"));
 
-      if (err.response?.status === 401) {
-        setError("Invalid email or password");
-      } else {
-        setError(err.response?.data?.message || "Login failed");
-      }
+      router.replace("/");
     }
-  };
+  } catch (err: any) {
+    console.error("Login Error:", err);
 
+    if (err.response?.status === 401) {
+      setError("Invalid email or password");
+    } else {
+      setError(err.response?.data?.message || "Login failed");
+    }
+  }
+};
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>

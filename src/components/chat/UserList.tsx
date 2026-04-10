@@ -3,30 +3,42 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function UserList({ setSelectedChat , setSelectedUser }: any) {
+export default function UserList({ setSelectedChat, setSelectedUser }: any) {
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
+    const storedToken = localStorage.getItem("token");
+
+    console.log("TOKEN IN USERLIST:", storedToken);
+
+    if (!storedToken) {
+      console.log("❌ No token found → redirect to login");
+      return;
+    }
+
+    setToken(storedToken);
   }, []);
 
   const fetchUsers = async () => {
     if (!token) return;
 
     try {
-      const res = await axios.get("http://localhost:5000/api/v1/users/search?search=" + search,
+      const res = await axios.get(
+        `http://localhost:5000/api/v1/users/search?search=${search}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
       console.log("USER API RESPONSE:", res.data);
 
-      setUsers(res.data.users || res.data || []);
-    } catch (err) {
-      console.log("User fetch error:", err);
+      setUsers(res.data.users || []);
+    } catch (err: any) {
+      console.log("❌ User fetch error:", err.response?.data || err.message);
     }
   };
 
@@ -35,21 +47,23 @@ export default function UserList({ setSelectedChat , setSelectedUser }: any) {
   }, [search, token]);
 
   const accessChat = async (user: any) => {
-  try {
-    const res = await axios.post(
-      "http://localhost:5000/api/chat",
-      { userId: user._id },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/chat",
+        { userId: user._id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setSelectedChat(res.data);
-    setSelectedUser(user); 
-  } catch (err) {
-    console.log("Chat access error:", err);
-  }
-};
+      setSelectedChat(res.data);
+      setSelectedUser(user);
+    } catch (err) {
+      console.log("Chat access error:", err);
+    }
+  };
 
   return (
     <div className="w-1/3 border-r p-3">

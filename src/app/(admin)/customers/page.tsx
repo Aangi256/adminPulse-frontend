@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import {
   getCustomers,
   createCustomer,
 } from "@/services/customerService";
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -25,7 +30,17 @@ export default function CustomersPage() {
   };
 
   useEffect(() => {
-    fetchCustomers();
+     const role = localStorage.getItem("role");
+
+    console.log("CURRENT ROLE:", role);
+
+    if (role !== "Admin") {
+      notFound();
+    } else {
+
+      fetchCustomers();
+    }
+      setLoading(false);
   }, []);
 
   // 🔹 Validation function

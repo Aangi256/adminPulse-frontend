@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 
 type Role = {
   _id: string;
@@ -12,37 +14,51 @@ type Role = {
 
 export default function RolePage() {
 
+  const router = useRouter();
+
   const [roles, setRoles] = useState<Role[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     status: "active"
   });
   const [editId, setEditId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
+  // ✅ PROTECT PAGE (ADMIN ONLY)
   useEffect(() => {
-    fetchRoles();
+
+    const role = localStorage.getItem("role");
+
+    console.log("CURRENT ROLE:", role);
+
+    if (role !== "Admin") {
+      notFound();
+    } else {
+      fetchRoles();
+    }
+
   }, []);
 
   const fetchRoles = async () => {
-  try {
-    const token = localStorage.getItem("token");
+    try {
 
-    console.log("TOKEN:", token); // DEBUG
+      const token = localStorage.getItem("token");
 
-    const res = await axios.get(
-      "http://localhost:5000/api/v1/roles",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ FIX
-        },
-      }
-    );
+      const res = await axios.get(
+        "http://localhost:5000/api/v1/roles",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setRoles(res.data);
-  } catch (error) {
-    console.error("Error fetching roles:", error);
-  }
-};
+      setRoles(res.data);
+
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -54,22 +70,35 @@ export default function RolePage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
 
     try {
+
+      const token = localStorage.getItem("token");
 
       if (editId) {
 
         await axios.put(
           `http://localhost:5000/api/v1/roles/${editId}`,
-          formData
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
 
       } else {
 
         await axios.post(
           "http://localhost:5000/api/v1/roles",
-          formData
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
 
       }
@@ -85,6 +114,7 @@ export default function RolePage() {
   };
 
   const handleEdit = (role: Role) => {
+
     setFormData({
       name: role.name,
       status: role.status
@@ -94,10 +124,18 @@ export default function RolePage() {
   };
 
   const handleDelete = async (id: string) => {
+
     try {
 
+      const token = localStorage.getItem("token");
+
       await axios.delete(
-        `http://localhost:5000/api/v1/roles/${id}`
+        `http://localhost:5000/api/v1/roles/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       fetchRoles();
@@ -106,6 +144,9 @@ export default function RolePage() {
       console.error("Error deleting role:", error);
     }
   };
+
+  // ✅ LOADING STATE
+  if (loading) return <div className="p-6">Checking Access...</div>;
 
   return (
     <div className="p-6 space-y-6">
@@ -153,16 +194,12 @@ export default function RolePage() {
         <table className="w-full border">
 
           <thead>
-
             <tr className="bg-gray-100">
-
               <th className="p-2 border">Role Name</th>
               <th className="p-2 border">Status</th>
               <th className="p-2 border">Created</th>
               <th className="p-2 border">Actions</th>
-
             </tr>
-
           </thead>
 
           <tbody>
@@ -170,10 +207,7 @@ export default function RolePage() {
             {roles.length === 0 ? (
 
               <tr>
-                <td
-                  colSpan={4}
-                  className="text-center p-4"
-                >
+                <td colSpan={4} className="text-center p-4">
                   No roles found
                 </td>
               </tr>
@@ -184,13 +218,9 @@ export default function RolePage() {
 
                 <tr key={role._id}>
 
-                  <td className="p-2 border">
-                    {role.name}
-                  </td>
+                  <td className="p-2 border">{role.name}</td>
 
-                  <td className="p-2 border">
-                    {role.status}
-                  </td>
+                  <td className="p-2 border">{role.status}</td>
 
                   <td className="p-2 border">
                     {new Date(role.createdAt).toLocaleDateString()}
