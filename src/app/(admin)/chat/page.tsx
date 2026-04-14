@@ -5,35 +5,27 @@ import { useRouter } from "next/navigation";
 import ChatPage from "@/components/chat/ChatPage";
 
 export default function Page() {
-
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
 
-    console.log("CHAT PAGE ROLE:", role);
-
-    // ✅ If not logged in → block
-    if (!token) {
-      router.replace("/signin");
-      return;
-    }
-
-    // ✅ Allow both Admin & User
-    if (!role) {
+    if (!token || !role) {
       router.replace("/signin");
       return;
     }
 
     setLoading(false);
-
   }, []);
 
   if (loading) {
-    return <div className="p-6">Loading Chat...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return <ChatPage />;
