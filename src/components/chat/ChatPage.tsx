@@ -12,20 +12,24 @@ export default function ChatPage() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [totalUnread, setTotalUnread] = useState(0);
-  // ── Use useState (not useRef) so child components re-render when socket is ready
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return;
+
+    const parsedUser = JSON.parse(storedUser);
+    const userId = parsedUser.id;
+
     if (!userId) return;
 
     const newSocket = io(ENDPOINT, { transports: ["websocket"] });
 
     newSocket.on("connect", () => {
+      console.log("✅ Socket Connected");
       newSocket.emit("setup", userId);
     });
 
-    // ── Receive live online user list from server
     newSocket.on("online users", (users: string[]) => {
       setOnlineUsers(users);
     });
@@ -38,8 +42,8 @@ export default function ChatPage() {
   }, []);
 
   return (
-    <div className="flex h-[calc(100vh-70px)] bg-gray-100 dark:bg-gray-900 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-      {/* Left Panel – User / Chat List */}
+    <div className="h-screen flex overflow-hidden bg-gray-100 dark:bg-gray-900">
+      
       <UserList
         socket={socket}
         onlineUsers={onlineUsers}
@@ -50,7 +54,6 @@ export default function ChatPage() {
         setTotalUnread={setTotalUnread}
       />
 
-      {/* Right Panel – Chat Box */}
       <ChatBox
         socket={socket}
         selectedChat={selectedChat}
