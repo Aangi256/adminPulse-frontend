@@ -10,8 +10,6 @@ export default function TechnicalForm({ form, setForm }: any) {
     }));
   };
 
-  // 🔥 DROPDOWN OPTIONS (AS PER YOUR IMAGE)
-
   const plateThicknessOptions = [
     "0.66",
     "0.95",
@@ -41,14 +39,12 @@ export default function TechnicalForm({ form, setForm }: any) {
   return (
     <div className="space-y-3">
 
-      {/* HEADER */}
       <div className="bg-gray-700 text-white px-4 py-2 rounded font-semibold text-lg">
         TECHNICAL DETAILS
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 
-        {/* PLATE THICKNESS */}
         <div>
           <label className="text-sm font-semibold text-gray-700">
             Plate Thickness
@@ -64,7 +60,6 @@ export default function TechnicalForm({ form, setForm }: any) {
           </select>
         </div>
 
-        {/* SCREEN RULING */}
         <div>
           <label className="text-sm font-semibold text-gray-700">
             Screen Ruling (LPI)
@@ -80,7 +75,6 @@ export default function TechnicalForm({ form, setForm }: any) {
           </select>
         </div>
 
-        {/* SENSOR SPOT */}
         <div>
           <label className="text-sm font-semibold text-gray-700">
             Sensor Spot
@@ -96,7 +90,6 @@ export default function TechnicalForm({ form, setForm }: any) {
           </select>
         </div>
 
-        {/* BEARER */}
         <div>
           <label className="text-sm font-semibold text-gray-700">
             Bearer
@@ -112,7 +105,6 @@ export default function TechnicalForm({ form, setForm }: any) {
           </select>
         </div>
 
-        {/* DISTORTION */}
         <div>
           <label className="text-sm font-semibold text-gray-700">
             Distortion
@@ -130,7 +122,6 @@ export default function TechnicalForm({ form, setForm }: any) {
 
       </div>
 
-      {/* SPECIAL INSTRUCTION */}
       <div>
         <label className="text-sm font-semibold text-gray-700">
           Special Instruction
@@ -141,7 +132,6 @@ export default function TechnicalForm({ form, setForm }: any) {
         />
       </div>
 
-      {/* OLD REF */}
       <div className="grid grid-cols-2 gap-4">
 
         <div>
