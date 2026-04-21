@@ -1,16 +1,24 @@
-import axios from "axios";
-import JobDetails from "@/components/jobs/JobDetails";
+"use client";
 
-async function getJob(id: string) {
-  const res = await axios.get(
-    `http://localhost:5000/api/jobs`
+import { useEffect, useState } from "react";
+import { getJobById } from "@/services/jobService";
+import { useParams } from "next/navigation";
+
+export default function JobDetail() {
+  const { id } = useParams();
+  const [job, setJob] = useState<any>(null);
+
+  useEffect(() => {
+    getJobById(id as string).then(res => setJob(res.data));
+  }, []);
+
+  if (!job) return <p>Loading...</p>;
+
+  return (
+    <div className="p-6">
+      <h1>{job.jobId}</h1>
+      <p>{job.jobDetail.customerName}</p>
+      <p>{job.jobDetail.jobName}</p>
+    </div>
   );
-
-  return res.data.find((j: any) => j._id === id);
-}
-
-export default async function Page({ params }: any) {
-  const job = await getJob(params.id);
-
-  return <JobDetails job={job} />;
 }
