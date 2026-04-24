@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createJob } from "@/services/jobService";
 
 import JobDetailForm from "@/components/jobs/JobDetailForm";
@@ -10,86 +11,138 @@ import ContactForm from "@/components/jobs/ContactForm";
 import FileUpload from "@/components/jobs/FileUpload";
 
 export default function CreateJob() {
+  const router = useRouter();
+
+  // ✅ SAFE INITIAL STATE (VERY IMPORTANT)
   const [form, setForm] = useState<any>({
-    jobDetail: {},
+    jobDetail: {
+      customerName: "",
+      jobName: "",
+      poNumber: "",
+      date: "",
+    },
     colorDetails: [{ color: "", anilox: "", volume: "" }],
     technicalDetails: {
       oldRefNo: "",
       oldRefDate: "",
     },
-    contactDetails: {},
+    contactDetails: {
+      preparedBy: "",
+      mobile: "",
+      email: "",
+    },
   });
 
   const [file, setFile] = useState<any>(null);
   const [errors, setErrors] = useState<any>({});
+  const [touched, setTouched] = useState<any>({});
 
-  // ✅ FINAL VALIDATION (FIXED)
+  // ✅ VALIDATION
   const validate = () => {
     let newErrors: any = {};
 
-    if (!form.jobDetail?.customerName?.trim())
+    if (!form?.jobDetail?.customerName?.trim())
       newErrors.customerName = "Customer Name is required";
 
-    if (!form.jobDetail?.jobName?.trim())
+    if (!form?.jobDetail?.jobName?.trim())
       newErrors.jobName = "Job Name is required";
 
-    if (!form.jobDetail?.poNumber?.trim())
+    if (!form?.jobDetail?.poNumber?.trim())
       newErrors.poNumber = "PO Number is required";
 
-    if (!form.jobDetail?.date)
+    if (!form?.jobDetail?.date)
       newErrors.date = "Date is required";
 
-    if (!form.contactDetails?.preparedBy?.trim())
+    if (!form?.contactDetails?.preparedBy?.trim())
       newErrors.preparedBy = "Prepared By is required";
 
-    if (!form.contactDetails?.mobile?.trim())
+    if (!form?.contactDetails?.mobile?.trim())
       newErrors.mobile = "Mobile is required";
     else if (!/^[0-9]{10}$/.test(form.contactDetails.mobile))
       newErrors.mobile = "Enter valid 10 digit number";
 
     if (
-      form.contactDetails?.email &&
+      form?.contactDetails?.email &&
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactDetails.email)
     )
       newErrors.email = "Invalid email";
 
-    if (!form.colorDetails?.length || !form.colorDetails[0]?.color)
+    const hasValidColor = form?.colorDetails?.some(
+      (c: any) => c?.color?.trim()
+    );
+
+    if (!hasValidColor) {
       newErrors.color = "At least one color required";
+    }
 
     setErrors(newErrors);
-
-    console.log("VALIDATION ERRORS:", newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ FINAL SUBMIT (BLOCKING FIXED)
+  // ✅ SUBMIT
   const handleSubmit = async () => {
     const isValid = validate();
 
-    if (!isValid) {
-      console.log("Blocked due to validation");
-      return;
-    }
+    setTouched({
+      customerName: true,
+      jobName: true,
+      poNumber: true,
+      date: true,
+      preparedBy: true,
+      mobile: true,
+      email: true,
+      color: true,
+    });
+
+    if (!isValid) return;
 
     try {
       await createJob(form, file);
+
       alert("Job Created Successfully");
-    } catch (err) {
-      console.error(err);
+
+      router.push("/jobs");
+      router.refresh();
+
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Something went wrong");
     }
   };
+
+  // ✅ PREVENT RENDER CRASH
+  if (!form) return null;
 
   return (
     <div className="p-6 space-y-6">
 
-      <JobDetailForm form={form} setForm={setForm} errors={errors} />
-      <ColorTable form={form} setForm={setForm} errors={errors} />
+      <JobDetailForm
+        form={form}
+        setForm={setForm}
+        errors={errors}
+        touched={touched}
+        setTouched={setTouched}
+      />
+
+      <ColorTable
+        form={form}
+        setForm={setForm}
+        errors={errors}
+        touched={touched}
+        setTouched={setTouched}
+      />
+
       <TechnicalForm form={form} setForm={setForm} />
-      <ContactForm form={form} setForm={setForm} errors={errors} />
+
+      <ContactForm
+        form={form}
+        setForm={setForm}
+        errors={errors}
+        touched={touched}
+        setTouched={setTouched}
+      />
+
       <FileUpload setFile={setFile} />
 
-      {/* 🔥 IMPORTANT FIX */}
       <button
         type="button"
         onClick={handleSubmit}

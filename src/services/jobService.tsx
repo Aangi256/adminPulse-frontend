@@ -2,12 +2,25 @@ import axios from "axios";
 
 const API = "http://localhost:5000/api/jobs";
 
-export const createJob = (form: any, file: any) => {
-  const data = new FormData();
-  data.append("data", JSON.stringify(form));
-  if (file) data.append("file", file);
+export const createJob = async (form: any, file: any) => {
+  try {
+    const data = new FormData();
 
-  return axios.post(`${API}/create`, data);
+    data.append("data", JSON.stringify(form));
+    if (file) data.append("file", file);
+
+    const res = await axios.post(`${API}/create`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return res.data;
+
+  } catch (error: any) {
+    console.error("API ERROR:", error.response?.data);
+    throw error;
+  }
 };
 
 export const getJobs = () => axios.get(API);

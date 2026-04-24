@@ -9,16 +9,18 @@ export default function JobDetail() {
   const [job, setJob] = useState<any>(null);
 
   useEffect(() => {
-    getJobById(id as string).then(res => setJob(res.data));
-  }, []);
+    if (id) {
+      getJobById(id as string).then(res => setJob(res.data));
+    }
+  }, [id]); // ✅ FIX
 
   if (!job) return <p>Loading...</p>;
 
   return (
     <div className="p-6">
-      <h1>{job.jobId}</h1>
-      <p>{job.jobDetail.customerName}</p>
-      <p>{job.jobDetail.jobName}</p>
+      <h1 className="text-xl font-bold">{job.jobId}</h1>
+      <p>{job.jobDetail?.customerName}</p>
+      <p>{job.jobDetail?.jobName}</p>
     </div>
   );
 }

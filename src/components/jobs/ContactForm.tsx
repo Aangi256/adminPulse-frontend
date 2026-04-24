@@ -24,7 +24,7 @@ export default function ContactForm({ form, setForm, errors }: any) {
           <input className="border p-2 w-full"
             onChange={(e) => handleChange("preparedBy", e.target.value)}
           />
-          {errors?.preparedBy && <p className="text-red-500 text-xs">{errors.preparedBy}</p>}
+          {errors?.preparedBy && <p className="text-red-500">{errors.preparedBy}</p>}
         </div>
 
         <div>
@@ -32,7 +32,7 @@ export default function ContactForm({ form, setForm, errors }: any) {
           <input className="border p-2 w-full"
             onChange={(e) => handleChange("mobile", e.target.value)}
           />
-          {errors?.mobile && <p className="text-red-500 text-xs">{errors.mobile}</p>}
+          {errors?.mobile && <p className="text-red-500">{errors.mobile}</p>}
         </div>
 
         <div>
@@ -40,7 +40,7 @@ export default function ContactForm({ form, setForm, errors }: any) {
           <input className="border p-2 w-full"
             onChange={(e) => handleChange("email", e.target.value)}
           />
-          {errors?.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+          {errors?.email && <p className="text-red-500">{errors.email}</p>}
         </div>
 
       </div>
