@@ -1,155 +1,403 @@
-"use client";
+ "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createJob } from "@/services/jobService";
 
-import JobDetailForm from "@/components/jobs/JobDetailForm";
-import ColorTable from "@/components/jobs/ColorTable";
-import TechnicalForm from "@/components/jobs/TechnicalForm";
-import ContactForm from "@/components/jobs/ContactForm";
-import FileUpload from "@/components/jobs/FileUpload";
-
 export default function CreateJob() {
   const router = useRouter();
 
-  // ✅ SAFE INITIAL STATE (VERY IMPORTANT)
-  const [form, setForm] = useState<any>({
-    jobDetail: {
-      customerName: "",
-      jobName: "",
-      poNumber: "",
-      date: "",
-    },
+  const [form, setForm] = useState({
+    jobDetail: { customerName: "", jobName: "", poNumber: "", date: "" },
     colorDetails: [{ color: "", anilox: "", volume: "" }],
-    technicalDetails: {
-      oldRefNo: "",
-      oldRefDate: "",
-    },
-    contactDetails: {
-      preparedBy: "",
-      mobile: "",
-      email: "",
-    },
+    technicalDetails: { oldRefNo: "", oldRefDate: "" },
+    contactDetails: { preparedBy: "", mobile: "", email: "" },
   });
 
-  const [file, setFile] = useState<any>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<any>({});
   const [touched, setTouched] = useState<any>({});
+  const [showBanner, setShowBanner] = useState(false); // ✅ top-level error banner
 
-  // ✅ VALIDATION
-  const validate = () => {
-    let newErrors: any = {};
-
-    if (!form?.jobDetail?.customerName?.trim())
-      newErrors.customerName = "Customer Name is required";
-
-    if (!form?.jobDetail?.jobName?.trim())
-      newErrors.jobName = "Job Name is required";
-
-    if (!form?.jobDetail?.poNumber?.trim())
-      newErrors.poNumber = "PO Number is required";
-
-    if (!form?.jobDetail?.date)
-      newErrors.date = "Date is required";
-
-    if (!form?.contactDetails?.preparedBy?.trim())
-      newErrors.preparedBy = "Prepared By is required";
-
-    if (!form?.contactDetails?.mobile?.trim())
-      newErrors.mobile = "Mobile is required";
-    else if (!/^[0-9]{10}$/.test(form.contactDetails.mobile))
-      newErrors.mobile = "Enter valid 10 digit number";
-
-    if (
-      form?.contactDetails?.email &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactDetails.email)
-    )
-      newErrors.email = "Invalid email";
-
-    const hasValidColor = form?.colorDetails?.some(
-      (c: any) => c?.color?.trim()
-    );
-
-    if (!hasValidColor) {
-      newErrors.color = "At least one color required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // ── Handlers ──────────────────────────────────────────────
+  const handleJobDetail = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, jobDetail: { ...prev.jobDetail, [name]: value } }));
+    setTouched((prev: any) => ({ ...prev, [name]: true }));
+    setShowBanner(false);
   };
 
-  // ✅ SUBMIT
-  const handleSubmit = async () => {
-    const isValid = validate();
+  const handleContact = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, contactDetails: { ...prev.contactDetails, [name]: value } }));
+    setTouched((prev: any) => ({ ...prev, [name]: true }));
+    setShowBanner(false);
+  };
 
+  const handleTechnical = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, technicalDetails: { ...prev.technicalDetails, [name]: value } }));
+  };
+
+  const handleColorChange = (index: number, field: string, value: string) => {
+    setForm(prev => ({
+      ...prev,
+      colorDetails: prev.colorDetails.map((row, i) =>
+        i === index ? { ...row, [field]: value } : row
+      ),
+    }));
+    setTouched((prev: any) => ({ ...prev, color: true }));
+    setShowBanner(false);
+  };
+
+  const addColorRow = () => {
+    setForm(prev => ({
+      ...prev,
+      colorDetails: [...prev.colorDetails, { color: "", anilox: "", volume: "" }],
+    }));
+  };
+
+  const removeColorRow = (index: number) => {
+    if (form.colorDetails.length === 1) return;
+    setForm(prev => ({
+      ...prev,
+      colorDetails: prev.colorDetails.filter((_, i) => i !== index),
+    }));
+  };
+
+  // ── Validation ────────────────────────────────────────────
+  const validate = () => {
+    const newErrors: any = {};
+    const jd = form.jobDetail;
+    const cd = form.contactDetails;
+
+    if (!jd.customerName.trim()) newErrors.customerName = "Customer Name is required";
+    if (!jd.jobName.trim())      newErrors.jobName      = "Job Name is required";
+    if (!jd.poNumber.trim())     newErrors.poNumber     = "PO Number is required";
+    if (!jd.date.trim())         newErrors.date         = "Date is required";
+    if (!cd.preparedBy.trim())   newErrors.preparedBy   = "Prepared By is required";
+
+    if (!cd.mobile.trim())       newErrors.mobile = "Mobile is required";
+    else if (!/^[0-9]{10}$/.test(cd.mobile)) newErrors.mobile = "Enter valid 10 digit number";
+
+    if (cd.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cd.email))
+      newErrors.email = "Invalid email";
+
+    if (!form.colorDetails.some(c => c.color.trim()))
+      newErrors.color = "At least one color is required";
+
+    setErrors(newErrors);
+    return newErrors;
+  };
+
+  // ── Submit ────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    // Mark all fields as touched so inline errors appear
     setTouched({
-      customerName: true,
-      jobName: true,
-      poNumber: true,
-      date: true,
-      preparedBy: true,
-      mobile: true,
-      email: true,
-      color: true,
+      customerName: true, jobName: true, poNumber: true,
+      date: true, preparedBy: true, mobile: true, email: true, color: true,
     });
 
-    if (!isValid) return;
+    const validationErrors = validate();
+
+    if (Object.keys(validationErrors).length > 0) {
+      setShowBanner(true); // ✅ show top banner
+      // Scroll to top so user sees the banner
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    setShowBanner(false);
 
     try {
       await createJob(form, file);
-
-      alert("Job Created Successfully");
-
-      router.push("/jobs");
+      router.push("/jobs/list"); // ✅ redirect to list page
       router.refresh();
-
     } catch (err: any) {
-      alert(err.response?.data?.message || "Something went wrong");
+      alert(err.response?.data?.message || "Something went wrong. Please try again.");
     }
   };
 
-  // ✅ PREVENT RENDER CRASH
-  if (!form) return null;
+  // ── Helpers ───────────────────────────────────────────────
+  const inputClass = (field: string) =>
+    `w-full border rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 ${
+      touched[field] && errors[field] ? "border-red-500 bg-red-50" : "border-gray-300"
+    }`;
 
+  const ErrorMsg = ({ field }: { field: string }) =>
+    touched[field] && errors[field]
+      ? (
+        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+          <span>⚠</span> {errors[field]}
+        </p>
+      )
+      : null;
+
+  // ── Render ────────────────────────────────────────────────
   return (
     <div className="p-6 space-y-6">
 
-      <JobDetailForm
-        form={form}
-        setForm={setForm}
-        errors={errors}
-        touched={touched}
-        setTouched={setTouched}
-      />
+      {/* ✅ TOP-LEVEL VALIDATION BANNER */}
+      {showBanner && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-400 text-red-700 rounded-lg px-5 py-4 shadow-sm">
+          <span className="text-xl mt-0.5">❌</span>
+          <div>
+            <p className="font-semibold text-sm">Please fill in all required fields before submitting.</p>
+            <ul className="mt-1 list-disc list-inside text-xs space-y-0.5">
+              {Object.values(errors).map((msg: any, i) => (
+                <li key={i}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+          <button
+            onClick={() => setShowBanner(false)}
+            className="ml-auto text-red-400 hover:text-red-600 text-lg font-bold leading-none"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
-      <ColorTable
-        form={form}
-        setForm={setForm}
-        errors={errors}
-        touched={touched}
-        setTouched={setTouched}
-      />
+      {/* Job Details */}
+      <div className="bg-white rounded shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-700">Job Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-      <TechnicalForm form={form} setForm={setForm} />
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Customer Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text" name="customerName"
+              value={form.jobDetail.customerName}
+              onChange={handleJobDetail}
+              placeholder="Enter customer name"
+              className={inputClass("customerName")}
+            />
+            <ErrorMsg field="customerName" />
+          </div>
 
-      <ContactForm
-        form={form}
-        setForm={setForm}
-        errors={errors}
-        touched={touched}
-        setTouched={setTouched}
-      />
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Job Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text" name="jobName"
+              value={form.jobDetail.jobName}
+              onChange={handleJobDetail}
+              placeholder="Enter job name"
+              className={inputClass("jobName")}
+            />
+            <ErrorMsg field="jobName" />
+          </div>
 
-      <FileUpload setFile={setFile} />
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              PO Number <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text" name="poNumber"
+              value={form.jobDetail.poNumber}
+              onChange={handleJobDetail}
+              placeholder="Enter PO number"
+              className={inputClass("poNumber")}
+            />
+            <ErrorMsg field="poNumber" />
+          </div>
 
-      <button
-        type="button"
-        onClick={handleSubmit}
-        className="bg-blue-600 text-white px-6 py-2 rounded"
-      >
-        Submit Job
-      </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Date <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date" name="date"
+              value={form.jobDetail.date}
+              onChange={handleJobDetail}
+              className={inputClass("date")}
+            />
+            <ErrorMsg field="date" />
+          </div>
+
+        </div>
+      </div>
+
+      {/* Color Details */}
+      <div className="bg-white rounded shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-700">Color Details</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-100 text-gray-600">
+                <th className="border border-gray-300 px-3 py-2 text-left">#</th>
+                <th className="border border-gray-300 px-3 py-2 text-left">Color <span className="text-red-500">*</span></th>
+                <th className="border border-gray-300 px-3 py-2 text-left">Anilox</th>
+                <th className="border border-gray-300 px-3 py-2 text-left">Volume</th>
+                <th className="border border-gray-300 px-3 py-2 text-left">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {form.colorDetails.map((row, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="border border-gray-300 px-3 py-2 text-center">{index + 1}</td>
+                  <td className={`border px-3 py-2 ${touched.color && errors.color && !row.color.trim() ? "border-red-400 bg-red-50" : "border-gray-300"}`}>
+                    <input
+                      type="text" value={row.color}
+                      onChange={e => handleColorChange(index, "color", e.target.value)}
+                      placeholder="Color name"
+                      className="w-full outline-none text-sm px-1 py-0.5 bg-transparent"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-3 py-2">
+                    <input
+                      type="text" value={row.anilox}
+                      onChange={e => handleColorChange(index, "anilox", e.target.value)}
+                      placeholder="Anilox"
+                      className="w-full outline-none text-sm px-1 py-0.5"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-3 py-2">
+                    <input
+                      type="text" value={row.volume}
+                      onChange={e => handleColorChange(index, "volume", e.target.value)}
+                      placeholder="Volume"
+                      className="w-full outline-none text-sm px-1 py-0.5"
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-3 py-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeColorRow(index)}
+                      disabled={form.colorDetails.length === 1}
+                      className="text-red-500 hover:text-red-700 disabled:opacity-30 text-xs font-medium"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {touched.color && errors.color && (
+          <p className="text-red-500 text-xs flex items-center gap-1">
+            <span>⚠</span> {errors.color}
+          </p>
+        )}
+        <button type="button" onClick={addColorRow}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+          + Add Color Row
+        </button>
+      </div>
+
+      {/* Technical Details */}
+      <div className="bg-white rounded shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-700">Technical Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Old Ref No</label>
+            <input
+              type="text" name="oldRefNo"
+              value={form.technicalDetails.oldRefNo}
+              onChange={handleTechnical}
+              placeholder="Enter old ref no"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Old Ref Date</label>
+            <input
+              type="date" name="oldRefDate"
+              value={form.technicalDetails.oldRefDate}
+              onChange={handleTechnical}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+        </div>
+      </div>
+
+      {/* Contact Details */}
+      <div className="bg-white rounded shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-700">Contact Details</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Prepared By <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text" name="preparedBy"
+              value={form.contactDetails.preparedBy}
+              onChange={handleContact}
+              placeholder="Enter name"
+              className={inputClass("preparedBy")}
+            />
+            <ErrorMsg field="preparedBy" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Mobile <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text" name="mobile"
+              value={form.contactDetails.mobile}
+              onChange={handleContact}
+              placeholder="Enter 10 digit mobile"
+              maxLength={10}
+              className={inputClass("mobile")}
+            />
+            <ErrorMsg field="mobile" />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+            <input
+              type="email" name="email"
+              value={form.contactDetails.email}
+              onChange={handleContact}
+              placeholder="Enter email (optional)"
+              className={inputClass("email")}
+            />
+            <ErrorMsg field="email" />
+          </div>
+
+        </div>
+      </div>
+
+      {/* File Upload */}
+      <div className="bg-white rounded shadow p-6 space-y-2">
+        <h2 className="text-lg font-semibold text-gray-700">Attach File</h2>
+        <input
+          type="file"
+          onChange={e => setFile(e.target.files?.[0] || null)}
+          accept=".pdf,.jpg,.jpeg,.png,.xlsx,.docx"
+          className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4
+            file:rounded file:border-0 file:text-sm file:font-medium
+            file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        />
+        <p className="text-xs text-gray-400">Accepted: PDF, JPG, PNG, XLSX, DOCX</p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-medium"
+        >
+          Submit Job
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push("/jobs/list")}
+          className="bg-gray-100 text-gray-600 px-6 py-2 rounded hover:bg-gray-200 transition font-medium"
+        >
+          Cancel
+        </button>
+      </div>
 
     </div>
   );

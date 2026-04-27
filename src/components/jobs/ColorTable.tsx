@@ -1,152 +1,121 @@
-"use client";
+interface Props {
+  form: any;
+  setForm: any;
+  errors?: any;
+  touched?: any;
+  setTouched?: any;
+}
 
-export default function ColorTable({ form, setForm, errors }: any) {
+export default function ColorTable({
+  form,
+  setForm,
+  errors = {},
+  touched = {},
+  setTouched = () => {},
+}: Props) {
 
-  const handleChange = (index: number, field: string, value: any) => {
-    const updated = [...form.colorDetails];
-    updated[index] = {
-      ...updated[index],
-      [field]: value,
-    };
-
+  const handleColorChange = (index: number, field: string, value: string) => {
+    // ✅ Must spread prev AND map to update only the changed row
     setForm((prev: any) => ({
       ...prev,
-      colorDetails: updated,
+      colorDetails: prev.colorDetails.map((row: any, i: number) =>
+        i === index ? { ...row, [field]: value } : row
+      ),
     }));
+
+    setTouched((prev: any) => ({ ...prev, color: true }));
   };
 
   const addRow = () => {
     setForm((prev: any) => ({
       ...prev,
-      colorDetails: [
-        ...prev.colorDetails,
-        { color: "", anilox: "", volume: "" }
-      ],
+      colorDetails: [...prev.colorDetails, { color: "", anilox: "", volume: "" }],
     }));
   };
 
   const removeRow = (index: number) => {
-    if (form.colorDetails.length === 1) return; // ✅ prevent empty
-
-    const updated = form.colorDetails.filter((_: any, i: number) => i !== index);
-
+    if (form.colorDetails.length === 1) return;
     setForm((prev: any) => ({
       ...prev,
-      colorDetails: updated,
+      colorDetails: prev.colorDetails.filter((_: any, i: number) => i !== index),
     }));
   };
 
-  const colorOptions = [
-    "Cyan",
-    "Magenta",
-    "Yellow",
-    "Black",
-    "White",
-    "Orange",
-    "Green",
-    "Blue",
-    "Red",
-    "Violet",
-    "Gold",
-    "Silver"
-  ];
-
   return (
-    <div className="space-y-3">
+    <div className="bg-white rounded shadow p-6 space-y-4">
+      <h2 className="text-lg font-semibold text-gray-700">Color Details</h2>
 
-      <div className="bg-gray-700 text-white px-4 py-2 rounded font-semibold">
-        COLOR SCHEME DETAIL
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="bg-gray-100 text-gray-600">
+              <th className="border border-gray-300 px-3 py-2 text-left">#</th>
+              <th className="border border-gray-300 px-3 py-2 text-left">
+                Color <span className="text-red-500">*</span>
+              </th>
+              <th className="border border-gray-300 px-3 py-2 text-left">Anilox</th>
+              <th className="border border-gray-300 px-3 py-2 text-left">Volume</th>
+              <th className="border border-gray-300 px-3 py-2 text-left">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {form?.colorDetails?.map((row: any, index: number) => (
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-3 py-2 text-center">{index + 1}</td>
+                <td className="border border-gray-300 px-3 py-2">
+                  <input
+                    type="text"
+                    value={row.color || ""}
+                    onChange={(e) => handleColorChange(index, "color", e.target.value)}
+                    placeholder="Color name"
+                    className="w-full outline-none text-sm px-1 py-0.5"
+                  />
+                </td>
+                <td className="border border-gray-300 px-3 py-2">
+                  <input
+                    type="text"
+                    value={row.anilox || ""}
+                    onChange={(e) => handleColorChange(index, "anilox", e.target.value)}
+                    placeholder="Anilox"
+                    className="w-full outline-none text-sm px-1 py-0.5"
+                  />
+                </td>
+                <td className="border border-gray-300 px-3 py-2">
+                  <input
+                    type="text"
+                    value={row.volume || ""}
+                    onChange={(e) => handleColorChange(index, "volume", e.target.value)}
+                    placeholder="Volume"
+                    className="w-full outline-none text-sm px-1 py-0.5"
+                  />
+                </td>
+                <td className="border border-gray-300 px-3 py-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => removeRow(index)}
+                    disabled={form.colorDetails.length === 1}
+                    className="text-red-500 hover:text-red-700 disabled:opacity-30 text-xs font-medium"
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* ✅ GLOBAL ERROR */}
-      {errors?.color && (
-        <p className="text-red-500 text-sm">{errors.color}</p>
+      {touched.color && errors.color && (
+        <p className="text-red-500 text-xs">{errors.color}</p>
       )}
 
-      <table className="w-full border text-sm">
-        <thead className="bg-gray-200">
-          <tr>
-            <th className="border p-2">Color</th>
-            <th className="border p-2">Anilox</th>
-            <th className="border p-2">Volume</th>
-            <th className="border p-2 text-center">Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {form.colorDetails.map((row: any, index: number) => (
-            <tr key={index}>
-
-              {/* COLOR */}
-              <td className="border p-2">
-                <select
-                  value={row.color || ""} // ✅ controlled
-                  onChange={(e) =>
-                    handleChange(index, "color", e.target.value)
-                  }
-                  className="w-full border rounded px-2 py-1"
-                >
-                  <option value="">Select Color</option>
-                  {colorOptions.map((color, i) => (
-                    <option key={i} value={color}>
-                      {color}
-                    </option>
-                  ))}
-                </select>
-              </td>
-
-              {/* ANILOX */}
-              <td className="border p-2">
-                <input
-                  type="number"
-                  step="any"
-                  value={row.anilox || ""} // ✅ controlled
-                  onChange={(e) =>
-                    handleChange(index, "anilox", e.target.value)
-                  }
-                  className="w-full border rounded px-2 py-1"
-                  placeholder="e.g. 500"
-                />
-              </td>
-
-              {/* VOLUME */}
-              <td className="border p-2">
-                <input
-                  type="number"
-                  step="any"
-                  value={row.volume || ""} // ✅ controlled
-                  onChange={(e) =>
-                    handleChange(index, "volume", e.target.value)
-                  }
-                  className="w-full border rounded px-2 py-1"
-                  placeholder="e.g. 3.5"
-                />
-              </td>
-
-              {/* ACTION */}
-              <td className="border p-2 text-center space-x-2">
-                <button
-                  type="button"
-                  onClick={addRow}
-                  className="bg-green-500 hover:bg-green-600 text-white px-2 rounded"
-                >
-                  +
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => removeRow(index)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-2 rounded"
-                >
-                  -
-                </button>
-              </td>
-
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
+      <button
+        type="button"
+        onClick={addRow}
+        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+      >
+        + Add Color Row
+      </button>
     </div>
   );
 }
