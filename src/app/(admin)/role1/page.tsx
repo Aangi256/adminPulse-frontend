@@ -26,17 +26,14 @@ export default function RolePage() {
 
   // ✅ PROTECT PAGE (ADMIN ONLY)
   useEffect(() => {
-
-    const role = localStorage.getItem("role");
-
+    const role = localStorage.getItem("role")?.replace(/['"]/g, '');
     console.log("CURRENT ROLE:", role);
 
-    if (role !== "Admin") {
+    if (role?.toLowerCase() !== "admin") {
       notFound();
     } else {
-      fetchRoles();
+      fetchRoles().finally(() => setLoading(false));
     }
-
   }, []);
 
   const fetchRoles = async () => {
