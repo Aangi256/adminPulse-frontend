@@ -38,6 +38,9 @@ const getStatusColor = (status: string) => {
     case "WORKING_IN_PROGRESS":
     case "Working in Progress":
       return "bg-amber-100 text-amber-700";
+    case "PENDING_QC":
+    case "Pending QC":
+      return "bg-purple-100 text-purple-700";
     case "COMPLETED":
     case "Completed":
       return "bg-emerald-100 text-emerald-700";

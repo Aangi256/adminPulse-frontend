@@ -58,8 +58,7 @@ interface Job {
 
 const API = "http://localhost:5000/api/jobs";
 
-// Employee status options (matches backend enum)
-const STATUS_OPTIONS = ["Assigned", "Working in Progress", "Completed"];
+// We will define STATUS_OPTIONS dynamically inside the component
 
 // Helper to get file URL
 const resolveFileUrl = (fileUrl?: string) => {
@@ -229,6 +228,7 @@ export default function EmployeeJobDetailPage() {
   const empStatusColor: Record<string, { bg: string; text: string }> = {
     Assigned: { bg: "#eff6ff", text: "#1d4ed8" },
     "Working in Progress": { bg: "#fefce8", text: "#92400e" },
+    "Pending QC": { bg: "#f3e8ff", text: "#6b21a8" },
     Completed: { bg: "#f0fdf4", text: "#166534" },
   };
   const currentStatusStyle = empStatusColor[job?.employeeStatus || "Assigned"] || {
@@ -538,28 +538,41 @@ export default function EmployeeJobDetailPage() {
         </p>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "20px" }}>
-          {STATUS_OPTIONS.map((opt) => {
-            const isActive = selectedStatus === opt;
-            return (
-              <button
-                key={opt}
-                onClick={() => setSelectedStatus(opt)}
-                style={{
-                  padding: "8px 20px",
-                  borderRadius: "8px",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  border: isActive ? "2px solid #4f46e5" : "1px solid #e5e7eb",
-                  background: isActive ? "#4f46e5" : "#ffffff",
-                  color: isActive ? "#ffffff" : "#374151",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {opt}
-              </button>
-            );
-          })}
+          {(() => {
+            const myRole = getMyRole();
+            const isAdmin = typeof window !== "undefined" && localStorage.getItem("role") === "Admin";
+            
+            const options = (myRole === "QC" || isAdmin)
+              ? ["Assigned", "Working in Progress", "Completed"]
+              : ["Assigned", "Working in Progress", "Pending QC"];
+              
+            if (job?.employeeStatus && !options.includes(job.employeeStatus)) {
+              options.push(job.employeeStatus);
+            }
+            
+            return options.map((opt) => {
+              const isActive = selectedStatus === opt;
+              return (
+                <button
+                  key={opt}
+                  onClick={() => setSelectedStatus(opt)}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "8px",
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    border: isActive ? "2px solid #4f46e5" : "1px solid #e5e7eb",
+                    background: isActive ? "#4f46e5" : "#ffffff",
+                    color: isActive ? "#ffffff" : "#374151",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {opt}
+                </button>
+              );
+            });
+          })()}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>

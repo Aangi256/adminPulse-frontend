@@ -119,13 +119,14 @@ export default function Ecommerce() {
 
     const totalAssigned = resolvedJobs.length;
     const draft = resolvedJobs.filter(j => j.employeeStatus === "Draft").length;
-    const inProgress = resolvedJobs.filter(j => j.employeeStatus === "Working in Progress").length;
+    const inProgress = resolvedJobs.filter(j => j.employeeStatus === "Working in Progress" || j.employeeStatus === "Pending QC").length;
     const completed = resolvedJobs.filter(j => j.employeeStatus === "Completed").length;
     const assignedStatus = resolvedJobs.filter(j => !j.employeeStatus || j.employeeStatus === "Assigned").length;
 
-    // ✅ Calculate weighted progress: Completed = 100%, Working in Progress = 50%
+    // ✅ Calculate weighted progress: Completed = 100%, Pending QC = 80%, Working in Progress = 50%
     const totalProgressPoints = resolvedJobs.reduce((acc, j) => {
       if (j.employeeStatus === "Completed") return acc + 100;
+      if (j.employeeStatus === "Pending QC") return acc + 80;
       if (j.employeeStatus === "Working in Progress") return acc + 50;
       return acc;
     }, 0);
@@ -179,6 +180,7 @@ export default function Ecommerce() {
                       const colors: Record<string, string> = {
                         "Assigned": "bg-blue-100 text-blue-700",
                         "Working in Progress": "bg-yellow-100 text-yellow-700",
+                        "Pending QC": "bg-purple-100 text-purple-700",
                         "Completed": "bg-green-100 text-green-700",
                       };
                       return (
