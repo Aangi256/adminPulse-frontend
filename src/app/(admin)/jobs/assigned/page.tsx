@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ interface Job {
 const API = "http://localhost:5000/api/jobs";
 
 export default function AssignedJobsPage() {
+  const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [myJobs, setMyJobs] = useState<Job[]>([]);
@@ -146,15 +148,23 @@ export default function AssignedJobsPage() {
                         </span>
                       </td>
                       <td className="p-2 border">
-                        <button
-                          onClick={() => {
-                            setEditingJob(job);
-                            setNewStatus(job.employeeStatus || "Assigned");
-                          }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition"
-                        >
-                          Update Status
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => router.push(`/jobs/assigned/${job._id}`)}
+                            className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm transition"
+                          >
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingJob(job);
+                              setNewStatus(job.employeeStatus || "Assigned");
+                            }}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition"
+                          >
+                            Update Status
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

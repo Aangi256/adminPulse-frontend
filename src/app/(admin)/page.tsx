@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import io from "socket.io-client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Job {
@@ -18,7 +19,7 @@ interface Job {
     email: string;
   };
   employeeStatus?: string;
-  assignedTo?: string;
+  assignedTo?: string | { _id: string };
   assignmentHistory?: {
     user: string | { _id: string };
     jobRole: string;
@@ -38,6 +39,17 @@ export default function Ecommerce() {
   const [allUsers, setAllUsers] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
+
+  // ✅ Live status map: jobId -> employeeStatus, updated via socket in real-time
+  const [liveStatusMap, setLiveStatusMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const socket = io("http://localhost:5000", { transports: ["websocket"] });
+    socket.on("employee_status_updated", (data: { jobId: string; employeeStatus: string }) => {
+      setLiveStatusMap((prev) => ({ ...prev, [data.jobId]: data.employeeStatus }));
+    });
+    return () => { socket.disconnect(); };
+  }, []);
 
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
@@ -93,13 +105,34 @@ export default function Ecommerce() {
   }
 
   const employeeStats = allUsers.map((user) => {
-    const assignedJobs = adminJobs.filter((job) => job.assignedTo === user._id);
+    const assignedJobs = adminJobs.filter((job) => {
+      if (!job.assignedTo) return false;
+      const jobUserId = typeof job.assignedTo === "string" ? job.assignedTo : (job.assignedTo as any)?._id;
+      return jobUserId === user._id;
+    });
     
-    const totalAssigned = assignedJobs.length;
-    const draft = assignedJobs.filter(j => j.employeeStatus === "Draft").length;
-    const inProgress = assignedJobs.filter(j => j.employeeStatus === "Working in Progress").length;
-    const completed = assignedJobs.filter(j => j.employeeStatus === "Completed").length;
-    const assignedStatus = assignedJobs.filter(j => !j.employeeStatus || j.employeeStatus === "Assigned").length;
+    // ✅ Use live socket status if available, otherwise fall back to DB value
+    const resolvedJobs = assignedJobs.map((job) => ({
+      ...job,
+      employeeStatus: liveStatusMap[job._id] ?? job.employeeStatus,
+    }));
+
+    const totalAssigned = resolvedJobs.length;
+    const draft = resolvedJobs.filter(j => j.employeeStatus === "Draft").length;
+    const inProgress = resolvedJobs.filter(j => j.employeeStatus === "Working in Progress").length;
+    const completed = resolvedJobs.filter(j => j.employeeStatus === "Completed").length;
+    const assignedStatus = resolvedJobs.filter(j => !j.employeeStatus || j.employeeStatus === "Assigned").length;
+
+    // ✅ Calculate weighted progress: Completed = 100%, Working in Progress = 50%
+    const totalProgressPoints = resolvedJobs.reduce((acc, j) => {
+      if (j.employeeStatus === "Completed") return acc + 100;
+      if (j.employeeStatus === "Working in Progress") return acc + 50;
+      return acc;
+    }, 0);
+
+    const progressPercentage = totalAssigned > 0 
+      ? Math.round(totalProgressPoints / totalAssigned) 
+      : 0;
 
     return {
       ...user,
@@ -107,7 +140,8 @@ export default function Ecommerce() {
       draft,
       inProgress,
       completed,
-      assignedStatus
+      assignedStatus,
+      progressPercentage
     };
   });
 
@@ -140,9 +174,19 @@ export default function Ecommerce() {
                         }
                       </p>
                     </div>
-                    <span className="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-semibold rounded-full">
-                      {job.employeeStatus || "Assigned"}
-                    </span>
+                    {(() => {
+                      const empStatus = liveStatusMap[job._id] ?? job.employeeStatus;
+                      const colors: Record<string, string> = {
+                        "Assigned": "bg-blue-100 text-blue-700",
+                        "Working in Progress": "bg-yellow-100 text-yellow-700",
+                        "Completed": "bg-green-100 text-green-700",
+                      };
+                      return (
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${colors[empStatus || "Assigned"] || "bg-indigo-100 text-indigo-800"}`}>
+                          {empStatus || "Assigned"}
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   <div className="space-y-2 text-sm text-gray-600 mb-6">
@@ -179,9 +223,7 @@ export default function Ecommerce() {
                 <tbody>
                   {employeeStats.map((stat) => {
                     const pending = stat.draft + stat.assignedStatus;
-                    const progressPercentage = stat.totalAssigned > 0 
-                      ? Math.round((stat.completed / stat.totalAssigned) * 100) 
-                      : 0;
+                    const progressPercentage = stat.progressPercentage;
 
                     return (
                       <tr key={stat._id} className="hover:bg-gray-50 transition">

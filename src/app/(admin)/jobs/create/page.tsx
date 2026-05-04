@@ -10,9 +10,18 @@ export default function CreateJob() {
   const router = useRouter();
 
   const [form, setForm] = useState({
-    jobDetail: { customerName: "", jobName: "", poNumber: "", date: "" },
+    jobDetail: {
+      customerName: "", jobName: "", poNumber: "", date: "",
+      sizeAround: "", sizeAcross: "", cylinder: "", cylinderMM: "",
+      subWidth: "", noOfAround: "", noOfAcross: "",
+      aroundGap: "", acrossGap: "", totalUps: "",
+    },
     colorDetails: [{ color: "", anilox: "", volume: "" }],
-    technicalDetails: { oldRefNo: "", oldRefDate: "" },
+    technicalDetails: {
+      oldRefNo: "", oldRefDate: "",
+      plateThickness: "", screenRuling: "", sensorSpot: "",
+      bearer: "", distortion: "", specialInstruction: "",
+    },
     contactDetails: { preparedBy: "", mobile: "", email: "" },
     status: "DRAFT",
   });
@@ -357,6 +366,116 @@ export default function CreateJob() {
             <ErrorMsg field="date" />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Size Around</label>
+            <input
+              type="number" name="sizeAround"
+              value={form.jobDetail.sizeAround}
+              onChange={handleJobDetail}
+              placeholder="Enter size around"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Size Across</label>
+            <input
+              type="number" name="sizeAcross"
+              value={form.jobDetail.sizeAcross}
+              onChange={handleJobDetail}
+              placeholder="Enter size across"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Cylinder</label>
+            <input
+              type="text" name="cylinder"
+              value={form.jobDetail.cylinder}
+              onChange={handleJobDetail}
+              placeholder="Enter cylinder"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Cylinder MM</label>
+            <input
+              type="number" name="cylinderMM"
+              value={form.jobDetail.cylinderMM}
+              onChange={handleJobDetail}
+              placeholder="Enter cylinder MM"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Sub Width</label>
+            <input
+              type="number" name="subWidth"
+              value={form.jobDetail.subWidth}
+              onChange={handleJobDetail}
+              placeholder="Enter sub width"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">No. of Around</label>
+            <input
+              type="number" name="noOfAround"
+              value={form.jobDetail.noOfAround}
+              onChange={handleJobDetail}
+              placeholder="Enter no. of around"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">No. of Across</label>
+            <input
+              type="number" name="noOfAcross"
+              value={form.jobDetail.noOfAcross}
+              onChange={handleJobDetail}
+              placeholder="Enter no. of across"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Around Gap</label>
+            <input
+              type="number" name="aroundGap"
+              value={form.jobDetail.aroundGap}
+              onChange={handleJobDetail}
+              placeholder="Enter around gap"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Across Gap</label>
+            <input
+              type="number" name="acrossGap"
+              value={form.jobDetail.acrossGap}
+              onChange={handleJobDetail}
+              placeholder="Enter across gap"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Total Ups</label>
+            <input
+              type="number" name="totalUps"
+              value={form.jobDetail.totalUps}
+              onChange={handleJobDetail}
+              placeholder="Enter total ups"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
         </div>
       </div>
 
@@ -453,6 +572,73 @@ export default function CreateJob() {
                 setForm((prev) => ({ ...prev, technicalDetails: { ...prev.technicalDetails, oldRefDate: dateStr } }));
               }}
               placeholder="Select date"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Plate Thickness</label>
+            <input
+              type="text" name="plateThickness"
+              value={form.technicalDetails.plateThickness}
+              onChange={handleTechnical}
+              placeholder="Enter plate thickness"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Screen Ruling</label>
+            <input
+              type="text" name="screenRuling"
+              value={form.technicalDetails.screenRuling}
+              onChange={handleTechnical}
+              placeholder="Enter screen ruling"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Sensor Spot</label>
+            <input
+              type="text" name="sensorSpot"
+              value={form.technicalDetails.sensorSpot}
+              onChange={handleTechnical}
+              placeholder="Enter sensor spot"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Bearer</label>
+            <input
+              type="text" name="bearer"
+              value={form.technicalDetails.bearer}
+              onChange={handleTechnical}
+              placeholder="Enter bearer"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Distortion</label>
+            <input
+              type="text" name="distortion"
+              value={form.technicalDetails.distortion}
+              onChange={handleTechnical}
+              placeholder="Enter distortion"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-600 mb-1">Special Instruction</label>
+            <textarea
+              name="specialInstruction"
+              value={form.technicalDetails.specialInstruction}
+              onChange={(e) => setForm((prev) => ({ ...prev, technicalDetails: { ...prev.technicalDetails, specialInstruction: e.target.value } }))}
+              placeholder="Enter any special instructions"
+              rows={3}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 resize-none"
             />
           </div>
 

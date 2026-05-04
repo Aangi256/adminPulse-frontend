@@ -134,7 +134,12 @@ export default function NotificationDropdown() {
       if (userRole === "Admin") {
         router.push("/jobs/list");
       } else {
-        router.push("/");
+        // Employee: go to job detail page so they can see all job info + update status
+        if (jobId) {
+          router.push(`/jobs/assigned/${jobId}`);
+        } else {
+          router.push("/jobs/assigned");
+        }
       }
       return;
     }
