@@ -47,6 +47,15 @@ function formatTime(dateStr: string): string {
     });
 }
 
+// ── Helper: Format Avatar Source
+const getAvatarSrc = (image?: string) => {
+    if (!image || image.includes("default-user.png")) return "/images/user/user-01.jpg";
+    if (image.startsWith("http")) return image;
+    if (image.startsWith("/")) return image;
+    const path = image.replace(/\\/g, "/").replace(/^uploads\//, "");
+    return `http://localhost:5000/uploads/${path}`;
+};
+
 export default function ChatBox({
     socket,
     selectedChat,
@@ -249,7 +258,7 @@ export default function ChatBox({
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                         {selectedUser?.image ? (
                             <Image
-                                src={`http://localhost:5000/${selectedUser.image}`}
+                                src={getAvatarSrc(selectedUser.image)}
                                 alt={selectedUser.fullName}
                                 width={40}
                                 height={40}
@@ -317,7 +326,7 @@ export default function ChatBox({
                                                     <div className="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
                                                         {msg.sender.image ? (
                                                             <Image
-                                                                src={`http://localhost:5000/${msg.sender.image}`}
+                                                                src={getAvatarSrc(msg.sender.image)}
                                                                 alt={msg.sender.fullName}
                                                                 width={28}
                                                                 height={28}

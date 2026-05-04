@@ -32,7 +32,8 @@ const allNavItems: NavItem[] = [
 
   { name: "Chat", path: "/chat", icon: "💬" },
 
-  { name: "Job", path: "/jobs", icon: <JobIcon className="w-5 h-5" /> }
+  { name: "Job", path: "/jobs", icon: <JobIcon className="w-5 h-5" /> },
+  { name: "Assigned Job", path: "/jobs/assigned", icon: <JobIcon className="w-5 h-5" /> }
 ];
 
 const othersItems: NavItem[] = [];
@@ -53,12 +54,13 @@ const AppSidebar: React.FC = () => {
   /* 🔥 FILTER BASED ON ROLE */
   const navItems =
     role === "Admin"
-      ? allNavItems
+      ? allNavItems.filter((item) => item.name !== "Assigned Job")
       : allNavItems.filter(
           (item) =>
             item.name === "Dashboard" ||
             item.name === "User Profile" ||
-            item.name === "Chat"
+            item.name === "Chat" ||
+            item.name === "Assigned Job"
         );
 
   /* ---------- EXISTING LOGIC ---------- */

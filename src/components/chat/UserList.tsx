@@ -35,6 +35,15 @@ interface Props {
   setTotalUnread: (n: number) => void;
 }
 
+// ── Helper: Format Avatar Source
+const getAvatarSrc = (image?: string) => {
+  if (!image || image.includes("default-user.png")) return "/images/user/user-01.jpg";
+  if (image.startsWith("http")) return image;
+  if (image.startsWith("/")) return image;
+  const path = image.replace(/\\/g, "/").replace(/^uploads\//, "");
+  return `http://localhost:5000/uploads/${path}`;
+};
+
 export default function UserList({
   socket,
   onlineUsers,
@@ -241,7 +250,7 @@ export default function UserList({
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                     {user.image ? (
                       <Image
-                        src={`http://localhost:5000/${user.image}`}
+                        src={getAvatarSrc(user.image)}
                         alt={user.fullName}
                         width={48}
                         height={48}

@@ -32,11 +32,12 @@ export default function Ecommerce() {
   const [role, setRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [myJobs, setMyJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Admin states
+  const [adminJobs, setAdminJobs] = useState<Job[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
-  // Status edit state
-  const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [newStatus, setNewStatus] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
@@ -56,52 +57,59 @@ export default function Ecommerce() {
   }, []);
 
   useEffect(() => {
-    if (role === "Admin" || !userId) {
-      setLoading(false);
-      return;
-    }
+    if (!role) return;
 
-    const fetchJobs = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(API);
-        const allJobs = res.data;
-        const employeeJobs = allJobs.filter(
-          (j: Job) => j.assignedTo === userId
-        );
-        setMyJobs(employeeJobs);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        if (role === "Admin") {
+          const [jobsRes, usersRes] = await Promise.all([
+            axios.get(API, { headers }),
+            axios.get(`${API}/assign/users`, { headers })
+          ]);
+          setAdminJobs(jobsRes.data);
+          setAllUsers(usersRes.data.users || []);
+        } else if (userId) {
+          const res = await axios.get(API, { headers });
+          const employeeJobs = res.data.filter(
+            (j: Job) => j.assignedTo === userId
+          );
+          setMyJobs(employeeJobs);
+        }
       } catch (err) {
-        console.error("Failed to load jobs", err);
+        console.error("Failed to load dashboard data", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchJobs();
+    fetchData();
   }, [role, userId]);
-
-  const handleStatusUpdate = async () => {
-    if (!editingJob) return;
-    try {
-      await axios.put(`${API}/${editingJob._id}/employee-status`, {
-        employeeStatus: newStatus,
-      });
-      // Update local state
-      setMyJobs((prev) =>
-        prev.map((j) =>
-          j._id === editingJob._id ? { ...j, employeeStatus: newStatus } : j
-        )
-      );
-      setEditingJob(null);
-    } catch (err) {
-      console.error("Status update failed", err);
-    }
-  };
-
-  const statusOptions = ["Draft", "Working in Progress", "Assigned", "Completed"];
 
   if (loading) {
     return <div className="p-6">Loading dashboard...</div>;
   }
+
+  const employeeStats = allUsers.map((user) => {
+    const assignedJobs = adminJobs.filter((job) => job.assignedTo === user._id);
+    
+    const totalAssigned = assignedJobs.length;
+    const draft = assignedJobs.filter(j => j.employeeStatus === "Draft").length;
+    const inProgress = assignedJobs.filter(j => j.employeeStatus === "Working in Progress").length;
+    const completed = assignedJobs.filter(j => j.employeeStatus === "Completed").length;
+    const assignedStatus = assignedJobs.filter(j => !j.employeeStatus || j.employeeStatus === "Assigned").length;
+
+    return {
+      ...user,
+      totalAssigned,
+      draft,
+      inProgress,
+      completed,
+      assignedStatus
+    };
+  });
 
   return (
     <div className="p-6">
@@ -143,63 +151,61 @@ export default function Ecommerce() {
                     <p><strong className="text-gray-700">Alloted By:</strong> {job.contactDetails?.preparedBy}</p>
                     <p><strong className="text-gray-700">Contact:</strong> {job.contactDetails?.email} / {job.contactDetails?.mobile}</p>
                   </div>
-
-                  <button
-                    onClick={() => {
-                      setEditingJob(job);
-                      setNewStatus(job.employeeStatus || "Assigned");
-                    }}
-                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition"
-                  >
-                    Update Work Status
-                  </button>
                 </div>
               ))}
             </div>
           )}
-
-          {/* Modal for updating status */}
-          {editingJob && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-              <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
-                <h3 className="text-lg font-bold mb-4">Update Status</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Job: <strong>{editingJob.jobDetail?.jobName}</strong>
-                </p>
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 mb-6 focus:ring-2 focus:ring-indigo-500 outline-none"
-                >
-                  {statusOptions.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                  ))}
-                </select>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setEditingJob(null)}
-                    className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleStatusUpdate}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       ) : (
-        <div className="grid grid-cols-12 gap-4 md:gap-6">
-          <div className="col-span-12">
-            <div className="bg-white p-6 rounded-lg shadow text-gray-500">
-              Welcome to the Admin Dashboard.
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-6 text-gray-800">Employee Work Tracking</h2>
+          
+          {employeeStats.length === 0 ? (
+            <p className="text-gray-500">No employees found to track.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border">
+                <thead>
+                  <tr className="bg-gray-100 text-left">
+                    <th className="p-3 border">Employee Name</th>
+                    <th className="p-3 border">Email</th>
+                    <th className="p-3 border text-center">Total Assigned</th>
+                    <th className="p-3 border text-center text-blue-600">Pending</th>
+                    <th className="p-3 border text-center text-yellow-600">In Progress</th>
+                    <th className="p-3 border text-center text-green-600">Completed</th>
+                    <th className="p-3 border">Progress</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeeStats.map((stat) => {
+                    const pending = stat.draft + stat.assignedStatus;
+                    const progressPercentage = stat.totalAssigned > 0 
+                      ? Math.round((stat.completed / stat.totalAssigned) * 100) 
+                      : 0;
+
+                    return (
+                      <tr key={stat._id} className="hover:bg-gray-50 transition">
+                        <td className="p-3 border font-medium">{stat.fullName}</td>
+                        <td className="p-3 border text-gray-600">{stat.email}</td>
+                        <td className="p-3 border text-center font-bold">{stat.totalAssigned}</td>
+                        <td className="p-3 border text-center">{pending}</td>
+                        <td className="p-3 border text-center">{stat.inProgress}</td>
+                        <td className="p-3 border text-center">{stat.completed}</td>
+                        <td className="p-3 border">
+                          <div className="flex items-center gap-2">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+                            </div>
+                            <span className="text-xs font-semibold min-w-[3ch]">{progressPercentage}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

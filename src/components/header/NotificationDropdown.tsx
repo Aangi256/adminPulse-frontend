@@ -48,9 +48,12 @@ const getRefId = (value?: string | { _id: string }) => {
 };
 
 const getImageSrc = (image?: string) => {
-  if (!image) return "/default-user.png";
-  if (image.startsWith("http") || image.startsWith("/")) return image;
-  return `http://localhost:5000/uploads/${image}`;
+  if (!image || image.includes("default-user.png")) return "/images/user/user-01.jpg";
+  if (image.startsWith("http")) return image;
+  if (image.startsWith("/")) return image;
+  
+  const path = image.replace(/\\/g, "/").replace(/^uploads\//, "");
+  return `http://localhost:5000/uploads/${path}`;
 };
 
 export default function NotificationDropdown() {
