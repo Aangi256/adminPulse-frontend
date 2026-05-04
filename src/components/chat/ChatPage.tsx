@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import io, { Socket } from "socket.io-client";
 import UserList from "./UserList";
 import ChatBox from "./ChatBox";
@@ -8,6 +9,8 @@ import ChatBox from "./ChatBox";
 const ENDPOINT = "http://localhost:5000";
 
 export default function ChatPage() {
+  const searchParams = useSearchParams();
+  const initialChatId = searchParams.get("chatId");
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
@@ -47,6 +50,7 @@ export default function ChatPage() {
       <UserList
         socket={socket}
         onlineUsers={onlineUsers}
+        initialChatId={initialChatId}
         selectedChat={selectedChat}
         setSelectedChat={setSelectedChat}
         setSelectedUser={setSelectedUser}

@@ -1,8 +1,10 @@
- "use client";
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createJob } from "@/services/jobService";
+import { getCustomers } from "@/services/customerService";
+import DatePicker from "@/components/form/date-picker";
 
 export default function CreateJob() {
   const router = useRouter();
@@ -12,35 +14,81 @@ export default function CreateJob() {
     colorDetails: [{ color: "", anilox: "", volume: "" }],
     technicalDetails: { oldRefNo: "", oldRefDate: "" },
     contactDetails: { preparedBy: "", mobile: "", email: "" },
+    status: "DRAFT",
   });
 
   const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<any>({});
   const [touched, setTouched] = useState<any>({});
-  const [showBanner, setShowBanner] = useState(false); // ✅ top-level error banner
+  const [showBanner, setShowBanner] = useState(false);
+
+  // ── Customer Dropdown State ────────────────────────────────
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // ── Fetch Customers ────────────────────────────────────────
+  useEffect(() => {
+    setCustomersLoading(true);
+    getCustomers()
+      .then((res) => setCustomers(res.data || []))
+      .catch((err) => console.error("Failed to fetch customers:", err))
+      .finally(() => setCustomersLoading(false));
+  }, []);
+
+  // ── Close dropdown when clicking outside ──────────────────
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ── Filtered customers based on search ────────────────────
+  const filteredCustomers = customers.filter((c) =>
+    c.fullName?.toLowerCase().includes(customerSearch.toLowerCase())
+  );
+
+  // ── Select a customer from dropdown ───────────────────────
+  const handleSelectCustomer = (fullName: string) => {
+    setForm((prev) => ({
+      ...prev,
+      jobDetail: { ...prev.jobDetail, customerName: fullName },
+    }));
+    setCustomerSearch(fullName);
+    setShowDropdown(false);
+    setTouched((prev: any) => ({ ...prev, customerName: true }));
+    setErrors((prev: any) => ({ ...prev, customerName: undefined }));
+    setShowBanner(false);
+  };
 
   // ── Handlers ──────────────────────────────────────────────
   const handleJobDetail = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, jobDetail: { ...prev.jobDetail, [name]: value } }));
+    setForm((prev) => ({ ...prev, jobDetail: { ...prev.jobDetail, [name]: value } }));
     setTouched((prev: any) => ({ ...prev, [name]: true }));
     setShowBanner(false);
   };
 
   const handleContact = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, contactDetails: { ...prev.contactDetails, [name]: value } }));
+    setForm((prev) => ({ ...prev, contactDetails: { ...prev.contactDetails, [name]: value } }));
     setTouched((prev: any) => ({ ...prev, [name]: true }));
     setShowBanner(false);
   };
 
   const handleTechnical = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, technicalDetails: { ...prev.technicalDetails, [name]: value } }));
+    setForm((prev) => ({ ...prev, technicalDetails: { ...prev.technicalDetails, [name]: value } }));
   };
 
   const handleColorChange = (index: number, field: string, value: string) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       colorDetails: prev.colorDetails.map((row, i) =>
         i === index ? { ...row, [field]: value } : row
@@ -51,7 +99,7 @@ export default function CreateJob() {
   };
 
   const addColorRow = () => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       colorDetails: [...prev.colorDetails, { color: "", anilox: "", volume: "" }],
     }));
@@ -59,7 +107,7 @@ export default function CreateJob() {
 
   const removeColorRow = (index: number) => {
     if (form.colorDetails.length === 1) return;
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       colorDetails: prev.colorDetails.filter((_, i) => i !== index),
     }));
@@ -83,7 +131,7 @@ export default function CreateJob() {
     if (cd.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cd.email))
       newErrors.email = "Invalid email";
 
-    if (!form.colorDetails.some(c => c.color.trim()))
+    if (!form.colorDetails.some((c) => c.color.trim()))
       newErrors.color = "At least one color is required";
 
     setErrors(newErrors);
@@ -92,7 +140,6 @@ export default function CreateJob() {
 
   // ── Submit ────────────────────────────────────────────────
   const handleSubmit = async () => {
-    // Mark all fields as touched so inline errors appear
     setTouched({
       customerName: true, jobName: true, poNumber: true,
       date: true, preparedBy: true, mobile: true, email: true, color: true,
@@ -101,8 +148,7 @@ export default function CreateJob() {
     const validationErrors = validate();
 
     if (Object.keys(validationErrors).length > 0) {
-      setShowBanner(true); // ✅ show top banner
-      // Scroll to top so user sees the banner
+      setShowBanner(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -111,7 +157,7 @@ export default function CreateJob() {
 
     try {
       await createJob(form, file);
-      router.push("/jobs/list"); // ✅ redirect to list page
+      router.push("/jobs/list");
       router.refresh();
     } catch (err: any) {
       alert(err.response?.data?.message || "Something went wrong. Please try again.");
@@ -125,13 +171,11 @@ export default function CreateJob() {
     }`;
 
   const ErrorMsg = ({ field }: { field: string }) =>
-    touched[field] && errors[field]
-      ? (
-        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-          <span>⚠</span> {errors[field]}
-        </p>
-      )
-      : null;
+    touched[field] && errors[field] ? (
+      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+        <span>⚠</span> {errors[field]}
+      </p>
+    ) : null;
 
   // ── Render ────────────────────────────────────────────────
   return (
@@ -163,20 +207,107 @@ export default function CreateJob() {
         <h2 className="text-lg font-semibold text-gray-700">Job Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
+          {/* ✅ CUSTOMER NAME — Searchable Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Customer Name <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text" name="customerName"
-              value={form.jobDetail.customerName}
-              onChange={handleJobDetail}
-              placeholder="Enter customer name"
-              className={inputClass("customerName")}
-            />
+            <div className="relative" ref={dropdownRef}>
+              <div className={`flex items-center border rounded overflow-hidden focus-within:ring-2 focus-within:ring-blue-400 ${
+                touched.customerName && errors.customerName
+                  ? "border-red-500 bg-red-50"
+                  : "border-gray-300 bg-white"
+              }`}>
+                <input
+                  type="text"
+                  placeholder={customersLoading ? "Loading customers..." : "Search or select customer..."}
+                  value={customerSearch}
+                  onChange={(e) => {
+                    setCustomerSearch(e.target.value);
+                    setShowDropdown(true);
+                    // If user clears input, clear form value too
+                    if (!e.target.value) {
+                      setForm((prev) => ({
+                        ...prev,
+                        jobDetail: { ...prev.jobDetail, customerName: "" },
+                      }));
+                    }
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  disabled={customersLoading}
+                  className="flex-1 px-3 py-2 text-sm outline-none bg-transparent disabled:opacity-60"
+                />
+                {/* Clear button */}
+                {customerSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomerSearch("");
+                      setForm((prev) => ({
+                        ...prev,
+                        jobDetail: { ...prev.jobDetail, customerName: "" },
+                      }));
+                      setShowDropdown(true);
+                    }}
+                    className="px-2 text-gray-400 hover:text-red-500 transition"
+                  >
+                    ✕
+                  </button>
+                )}
+                {/* Chevron */}
+                <button
+                  type="button"
+                  onClick={() => setShowDropdown((prev) => !prev)}
+                  className="px-2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${showDropdown ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Dropdown List */}
+              {showDropdown && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-y-auto">
+                  {customersLoading ? (
+                    <div className="px-4 py-3 text-sm text-gray-400 text-center">
+                      Loading customers...
+                    </div>
+                  ) : filteredCustomers.length > 0 ? (
+                    filteredCustomers.map((customer) => (
+                      <button
+                        key={customer._id}
+                        type="button"
+                        onClick={() => handleSelectCustomer(customer.fullName)}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 hover:text-blue-700 transition flex items-center justify-between ${
+                          form.jobDetail.customerName === customer.fullName
+                            ? "bg-blue-50 text-blue-700 font-medium"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        <span>{customer.fullName}</span>
+                        {customer.company && (
+                          <span className="text-xs text-gray-400 ml-2">{customer.company}</span>
+                        )}
+                        {form.jobDetail.customerName === customer.fullName && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600 ml-auto shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-400 text-center">
+                      {customerSearch ? `No customer found for "${customerSearch}"` : "No customers available"}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <ErrorMsg field="customerName" />
           </div>
 
+          {/* Job Name */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Job Name <span className="text-red-500">*</span>
@@ -191,6 +322,7 @@ export default function CreateJob() {
             <ErrorMsg field="jobName" />
           </div>
 
+          {/* PO Number */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
               PO Number <span className="text-red-500">*</span>
@@ -205,16 +337,23 @@ export default function CreateJob() {
             <ErrorMsg field="poNumber" />
           </div>
 
+          {/* Date */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">
               Date <span className="text-red-500">*</span>
             </label>
-            <input
-              type="date" name="date"
-              value={form.jobDetail.date}
-              onChange={handleJobDetail}
-              className={inputClass("date")}
-            />
+            <div className={touched.date && errors.date ? "ring-2 ring-red-500 rounded-lg" : ""}>
+              <DatePicker
+                id="jobDate"
+                defaultDate={form.jobDetail.date}
+                onChange={(selectedDates, dateStr) => {
+                  setForm((prev) => ({ ...prev, jobDetail: { ...prev.jobDetail, date: dateStr } }));
+                  setTouched((prev: any) => ({ ...prev, date: true }));
+                  setShowBanner(false);
+                }}
+                placeholder="Select date"
+              />
+            </div>
             <ErrorMsg field="date" />
           </div>
 
@@ -242,7 +381,7 @@ export default function CreateJob() {
                   <td className={`border px-3 py-2 ${touched.color && errors.color && !row.color.trim() ? "border-red-400 bg-red-50" : "border-gray-300"}`}>
                     <input
                       type="text" value={row.color}
-                      onChange={e => handleColorChange(index, "color", e.target.value)}
+                      onChange={(e) => handleColorChange(index, "color", e.target.value)}
                       placeholder="Color name"
                       className="w-full outline-none text-sm px-1 py-0.5 bg-transparent"
                     />
@@ -250,7 +389,7 @@ export default function CreateJob() {
                   <td className="border border-gray-300 px-3 py-2">
                     <input
                       type="text" value={row.anilox}
-                      onChange={e => handleColorChange(index, "anilox", e.target.value)}
+                      onChange={(e) => handleColorChange(index, "anilox", e.target.value)}
                       placeholder="Anilox"
                       className="w-full outline-none text-sm px-1 py-0.5"
                     />
@@ -258,7 +397,7 @@ export default function CreateJob() {
                   <td className="border border-gray-300 px-3 py-2">
                     <input
                       type="text" value={row.volume}
-                      onChange={e => handleColorChange(index, "volume", e.target.value)}
+                      onChange={(e) => handleColorChange(index, "volume", e.target.value)}
                       placeholder="Volume"
                       className="w-full outline-none text-sm px-1 py-0.5"
                     />
@@ -307,11 +446,13 @@ export default function CreateJob() {
 
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Old Ref Date</label>
-            <input
-              type="date" name="oldRefDate"
-              value={form.technicalDetails.oldRefDate}
-              onChange={handleTechnical}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400"
+            <DatePicker
+              id="oldRefDate"
+              defaultDate={form.technicalDetails.oldRefDate}
+              onChange={(selectedDates, dateStr) => {
+                setForm((prev) => ({ ...prev, technicalDetails: { ...prev.technicalDetails, oldRefDate: dateStr } }));
+              }}
+              placeholder="Select date"
             />
           </div>
 
@@ -372,7 +513,7 @@ export default function CreateJob() {
         <h2 className="text-lg font-semibold text-gray-700">Attach File</h2>
         <input
           type="file"
-          onChange={e => setFile(e.target.files?.[0] || null)}
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
           accept=".pdf,.jpg,.jpeg,.png,.xlsx,.docx"
           className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4
             file:rounded file:border-0 file:text-sm file:font-medium

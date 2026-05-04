@@ -27,6 +27,7 @@ interface UserWithChat {
 interface Props {
   socket: any;
   onlineUsers: string[];
+  initialChatId?: string | null;
   selectedChat: any;
   setSelectedChat: (chat: any) => void;
   setSelectedUser: (user: any) => void;
@@ -37,6 +38,7 @@ interface Props {
 export default function UserList({
   socket,
   onlineUsers,
+  initialChatId,
   selectedChat,
   setSelectedChat,
   setSelectedUser,
@@ -79,6 +81,24 @@ export default function UserList({
   useEffect(() => {
     fetchChats();
   }, [fetchChats]);
+
+  useEffect(() => {
+    if (!initialChatId || selectedChat?._id === initialChatId) return;
+
+    const match = userList.find((item) => item.chat?._id === initialChatId);
+    if (!match?.chat) return;
+
+    setSelectedChat(match.chat);
+    setSelectedUser(match.user);
+
+    setUserList((prev) =>
+      prev.map((item) =>
+        item.chat?._id === initialChatId
+          ? { ...item, chat: item.chat ? { ...item.chat, unreadCount: 0 } : null }
+          : item
+      )
+    );
+  }, [initialChatId, selectedChat?._id, setSelectedChat, setSelectedUser, userList]);
 
   // ── Re-fetch on new socket message (updates last message preview + unread)
   useEffect(() => {

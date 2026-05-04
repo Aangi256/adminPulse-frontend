@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ChatPage from "@/components/chat/ChatPage";
 
@@ -28,5 +28,9 @@ export default function Page() {
     );
   }
 
-  return <ChatPage />;
+  return (
+    <Suspense fallback={null}>
+      <ChatPage />
+    </Suspense>
+  );
 }
